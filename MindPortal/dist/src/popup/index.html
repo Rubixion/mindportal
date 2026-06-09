@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FocusForge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/popup/popup.js"></script>
+    <link rel="modulepreload" crossorigin href="/chunks/modulepreload-polyfill-DaKOjhqt.js">
+    <link rel="modulepreload" crossorigin href="/chunks/utils-DXHU2JcO.js">
+    <link rel="stylesheet" crossorigin href="/assets/popup.css">
+  </head>
+  <body>
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <span class="flame">🔥</span>
+        <span class="brand-name">FocusForge</span>
+      </div>
+      <div class="streak-badge" id="streak-badge" title="Current streak">
+        <span id="streak-count">0</span>
+        <span class="streak-label">day streak</span>
+      </div>
+    </header>
+
+    <!-- Score -->
+    <section class="score-section">
+      <div class="score-ring-wrap">
+        <svg viewBox="0 0 80 80" class="score-ring" id="score-svg">
+          <circle cx="40" cy="40" r="34" class="ring-bg" />
+          <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill" />
+        </svg>
+        <div class="score-inner">
+          <span class="score-num" id="score-num">—</span>
+          <span class="score-label">score</span>
+        </div>
+      </div>
+      <div class="score-meta">
+        <div class="greeting" id="greeting">Good morning</div>
+        <div class="date" id="today-date"></div>
+        <div class="sessions-count" id="sessions-label"></div>
+      </div>
+    </section>
+
+    <!-- Time Bars -->
+    <section class="time-section">
+      <div class="time-row">
+        <div class="time-label">
+          <span class="dot green"></span>
+          <span>Productive</span>
+        </div>
+        <div class="time-bar-wrap">
+          <div class="time-bar green" id="productive-bar"></div>
+        </div>
+        <div class="time-value" id="productive-time">0m</div>
+        <div class="time-goal" id="productive-goal">/ 2h</div>
+      </div>
+      <div class="time-row">
+        <div class="time-label">
+          <span class="dot red"></span>
+          <span>Unproductive</span>
+        </div>
+        <div class="time-bar-wrap">
+          <div class="time-bar red" id="unproductive-bar"></div>
+        </div>
+        <div class="time-value" id="unproductive-time">0m</div>
+        <div class="time-goal" id="unproductive-goal">/ 30m</div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Pomodoro Timer -->
+    <section class="pomodoro-section">
+      <div class="section-title">
+        <span>🍅 Study Timer</span>
+        <span class="session-info" id="session-info">Session 1/4 · Work</span>
+      </div>
+      <div class="timer-display" id="timer-display">25:00</div>
+      <div class="timer-controls" id="timer-controls-idle">
+        <button class="btn-icon btn-start" id="btn-start" title="Start Pomodoro">
+          ▶ Start Focus
+        </button>
+      </div>
+      <div class="timer-controls hidden" id="timer-controls-active">
+        <button class="btn-icon btn-pause" id="btn-pause" title="Pause">⏸ Pause</button>
+        <button class="btn-icon btn-skip" id="btn-skip" title="Skip">⏭ Skip</button>
+        <button class="btn-icon btn-stop" id="btn-stop" title="Stop">■ Stop</button>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Focus Mode -->
+    <section class="focus-section">
+      <div class="focus-row" id="focus-idle-row">
+        <div>
+          <div class="section-title" style="margin-bottom:2px">🔒 Focus Mode</div>
+          <div class="focus-sub">Hard-block all distracting sites</div>
+        </div>
+        <div class="focus-duration-row">
+          <select id="focus-duration" class="duration-select">
+            <option value="15">15m</option>
+            <option value="30" selected>30m</option>
+            <option value="60">60m</option>
+            <option value="90">90m</option>
+            <option value="120">2h</option>
+          </select>
+          <button class="btn-focus-activate" id="btn-focus-activate">Activate</button>
+        </div>
+      </div>
+      <div class="focus-active-row hidden" id="focus-active-row">
+        <div>
+          <div class="focus-active-label">🔒 Focus Mode Active</div>
+          <div class="focus-remaining" id="focus-remaining">29:58 remaining</div>
+        </div>
+        <button class="btn-focus-cancel" id="btn-focus-cancel">Cancel</button>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Quote -->
+    <section class="quote-section">
+      <p class="quote-text" id="quote-text"></p>
+      <p class="quote-author" id="quote-author"></p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <button class="footer-btn" id="btn-options" title="Open settings">⚙ Settings</button>
+      <button class="footer-btn" id="btn-analytics" title="Open analytics">📊 Analytics</button>
+    </footer>
+
+  </body>
+</html>

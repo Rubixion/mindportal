@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FocusForge — Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/options/options.js"></script>
+    <link rel="modulepreload" crossorigin href="/chunks/modulepreload-polyfill-DaKOjhqt.js">
+    <link rel="modulepreload" crossorigin href="/chunks/utils-DXHU2JcO.js">
+    <link rel="modulepreload" crossorigin href="/chunks/defaults-CCjS-AZq.js">
+    <link rel="stylesheet" crossorigin href="/assets/options.css">
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <span>🔥</span>
+        <span>FocusForge</span>
+      </div>
+      <nav>
+        <button class="nav-item active" data-tab="analytics">📊 Analytics</button>
+        <button class="nav-item" data-tab="sites">🌐 Sites</button>
+        <button class="nav-item" data-tab="goals">🎯 Goals & Timer</button>
+        <button class="nav-item" data-tab="profile">👤 Profile</button>
+        <button class="nav-item" data-tab="about">ℹ️ About</button>
+      </nav>
+    </div>
+
+    <main class="content">
+      <!-- ── Analytics ── -->
+      <div class="tab-panel active" id="panel-analytics">
+        <div class="panel-header">
+          <h1>Analytics</h1>
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-num" id="stat-streak">0</div>
+              <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="stat-longest">0</div>
+              <div class="stat-label">Longest Streak</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="stat-sessions">0</div>
+              <div class="stat-label">Sessions Today</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="stat-score">—</div>
+              <div class="stat-label">Today's Score</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-card wide">
+            <div class="chart-title">
+              Daily Time (last 7 days)
+              <div class="chart-legend">
+                <span class="legend-dot green"></span>Productive
+                <span class="legend-dot red"></span>Unproductive
+              </div>
+            </div>
+            <canvas id="chart-daily" height="160"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-card">
+            <div class="chart-title">Today's Sites</div>
+            <canvas id="chart-sites" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Score Trend (14 days)</div>
+            <canvas id="chart-score" height="180"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card" style="margin-top:20px">
+          <div class="chart-title">Streak Calendar</div>
+          <div id="streak-calendar" class="streak-calendar"></div>
+        </div>
+
+        <div style="margin-top: 16px; text-align: right">
+          <button class="btn-danger-outline" id="btn-export">Export Data (JSON)</button>
+        </div>
+      </div>
+
+      <!-- ── Sites ── -->
+      <div class="tab-panel" id="panel-sites">
+        <div class="panel-header"><h1>Site Lists</h1></div>
+
+        <div class="sites-grid">
+          <div class="sites-column">
+            <h2 class="sites-heading productive-heading">✅ Productive Sites</h2>
+            <p class="sites-desc">Time on these sites counts toward your daily goal.</p>
+            <div class="site-tags" id="productive-tags"></div>
+            <div class="add-site-row">
+              <input type="text" id="productive-input" class="text-input" placeholder="e.g. notion.so" />
+              <button class="btn-add" id="btn-add-productive">Add</button>
+            </div>
+          </div>
+          <div class="sites-column">
+            <h2 class="sites-heading unproductive-heading">🚫 Unproductive Sites</h2>
+            <p class="sites-desc">Visiting these sites triggers a warning and counts against your cap.</p>
+            <div class="site-tags" id="unproductive-tags"></div>
+            <div class="add-site-row">
+              <input type="text" id="unproductive-input" class="text-input" placeholder="e.g. reddit.com" />
+              <button class="btn-add" id="btn-add-unproductive">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+        <div class="save-row">
+          <button class="btn-primary" id="btn-save-sites">Save Changes</button>
+          <span class="save-status" id="save-sites-status"></span>
+        </div>
+      </div>
+
+      <!-- ── Goals & Timer ── -->
+      <div class="tab-panel" id="panel-goals">
+        <div class="panel-header"><h1>Goals & Timer</h1></div>
+
+        <div class="settings-section">
+          <h3>Daily Goals</h3>
+          <div class="field-row">
+            <div class="field">
+              <label for="g-goal">Productive goal (minutes/day)</label>
+              <input type="number" id="g-goal" class="num-input" min="10" max="600" />
+              <span class="field-hint">Minimum productive minutes to count the day as successful</span>
+            </div>
+            <div class="field">
+              <label for="g-cap">Unproductive cap (minutes/day)</label>
+              <input type="number" id="g-cap" class="num-input" min="0" max="480" />
+              <span class="field-hint">Maximum unproductive minutes before the day is considered failed</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Warning Mode</h3>
+          <div class="radio-group" id="warning-mode-group">
+            <label class="radio-card" id="radio-countdown">
+              <input type="radio" name="warning-mode" value="countdown" />
+              <div class="radio-body">
+                <div class="radio-title">⏳ Countdown</div>
+                <div class="radio-desc">5-second pause before access</div>
+              </div>
+            </label>
+            <label class="radio-card" id="radio-warn">
+              <input type="radio" name="warning-mode" value="warn" />
+              <div class="radio-body">
+                <div class="radio-title">⚠️ Warn Only</div>
+                <div class="radio-desc">Ask before entering, no delay</div>
+              </div>
+            </label>
+            <label class="radio-card" id="radio-block">
+              <input type="radio" name="warning-mode" value="block" />
+              <div class="radio-body">
+                <div class="radio-title">🔒 Hard Block</div>
+                <div class="radio-desc">Requires Focus Mode to visit</div>
+              </div>
+            </label>
+          </div>
+          <div class="field" style="margin-top:12px" id="countdown-seconds-row">
+            <label for="g-countdown">Countdown duration (seconds)</label>
+            <input type="number" id="g-countdown" class="num-input" min="1" max="30" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Pomodoro Timer</h3>
+          <div class="field-row">
+            <div class="field">
+              <label for="g-work">Work session (minutes)</label>
+              <input type="number" id="g-work" class="num-input" min="5" max="90" />
+            </div>
+            <div class="field">
+              <label for="g-short-break">Short break (minutes)</label>
+              <input type="number" id="g-short-break" class="num-input" min="1" max="30" />
+            </div>
+            <div class="field">
+              <label for="g-long-break">Long break (minutes)</label>
+              <input type="number" id="g-long-break" class="num-input" min="5" max="60" />
+            </div>
+          </div>
+          <label class="toggle-row">
+            <input type="checkbox" id="g-auto-focus" />
+            <span class="toggle-label">Auto-activate Focus Mode during Pomodoro sessions</span>
+          </label>
+        </div>
+
+        <div class="settings-section">
+          <h3>Break Reminder</h3>
+          <div class="field">
+            <label for="g-break-reminder">Remind me after (minutes of continuous productive work)</label>
+            <input type="number" id="g-break-reminder" class="num-input" min="0" max="240" />
+            <span class="field-hint">Set to 0 to disable break reminders</span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Focus Mode</h3>
+          <div class="field">
+            <label for="g-focus-default">Default Focus Mode duration (minutes)</label>
+            <input type="number" id="g-focus-default" class="num-input" min="5" max="480" />
+          </div>
+          <label class="toggle-row">
+            <input type="checkbox" id="g-grace-period" />
+            <span class="toggle-label">Enable grace period (allow one missed day without breaking streak)</span>
+          </label>
+        </div>
+
+        <div class="save-row">
+          <button class="btn-primary" id="btn-save-goals">Save Changes</button>
+          <span class="save-status" id="save-goals-status"></span>
+        </div>
+      </div>
+
+      <!-- ── Profile ── -->
+      <div class="tab-panel" id="panel-profile">
+        <div class="panel-header"><h1>Profile</h1></div>
+        <div class="settings-section">
+          <h3>Your Name</h3>
+          <div class="field">
+            <label for="p-name">First name (used in greetings and overlays)</label>
+            <input type="text" id="p-name" class="text-input" maxlength="30" />
+          </div>
+        </div>
+        <div class="save-row">
+          <button class="btn-primary" id="btn-save-profile">Save</button>
+          <span class="save-status" id="save-profile-status"></span>
+        </div>
+      </div>
+
+      <!-- ── About ── -->
+      <div class="tab-panel" id="panel-about">
+        <div class="panel-header"><h1>About FocusForge</h1></div>
+        <div class="about-card">
+          <div class="about-logo">🔥</div>
+          <h2>FocusForge v1.0.0</h2>
+          <p>Forge your focus, one day at a time.</p>
+          <p style="color:#555;font-size:13px;margin-top:12px;line-height:1.6">
+            FocusForge helps you build discipline by tracking productive vs. unproductive browsing time,
+            warning you before entering distraction sites, running Pomodoro focus sessions, and maintaining
+            daily streaks to keep you accountable.
+          </p>
+        </div>
+        <div class="danger-zone">
+          <h3>Danger Zone</h3>
+          <p>Permanently erase all tracked data, streaks, and settings.</p>
+          <button class="btn-danger" id="btn-reset-all">Reset All Data</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Chart.js loaded locally via npm or CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </body>
+</html>

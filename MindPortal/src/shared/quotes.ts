@@ -1,0 +1,61 @@
+export interface Quote {
+  text: string;
+  author: string;
+}
+
+export const QUOTES: Quote[] = [
+  { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" },
+  { text: "We are what we repeatedly do. Excellence, then, is not an act but a habit.", author: "Aristotle" },
+  { text: "The successful warrior is the average person with laser-like focus.", author: "Bruce Lee" },
+  { text: "Motivation is what gets you started. Habit is what keeps you going.", author: "Jim Ryun" },
+  { text: "You don't rise to the level of your goals, you fall to the level of your systems.", author: "James Clear" },
+  { text: "It's not that I'm so smart, it's just that I stay with problems longer.", author: "Albert Einstein" },
+  { text: "The man who moves a mountain begins by carrying away small stones.", author: "Confucius" },
+  { text: "Small daily improvements over time lead to stunning results.", author: "Robin Sharma" },
+  { text: "The secret of your future is hidden in your daily routine.", author: "Mike Murdock" },
+  { text: "First, forget inspiration. Habit is more dependable.", author: "Octavia Butler" },
+  { text: "Waste no more time arguing what a good person should be. Be one.", author: "Marcus Aurelius" },
+  { text: "Confine yourself to the present.", author: "Marcus Aurelius" },
+  { text: "You have power over your mind, not outside events. Realize this and you will find strength.", author: "Marcus Aurelius" },
+  { text: "The impediment to action advances action. What stands in the way becomes the way.", author: "Marcus Aurelius" },
+  { text: "Luck is what happens when preparation meets opportunity.", author: "Seneca" },
+  { text: "It is not that we have little time, but that we waste a good deal of it.", author: "Seneca" },
+  { text: "Difficulties strengthen the mind as labor does the body.", author: "Seneca" },
+  { text: "No man is free who is not master of himself.", author: "Epictetus" },
+  { text: "Make the best use of what is in your power, and take the rest as it happens.", author: "Epictetus" },
+  { text: "He who is not a good servant will not be a good master.", author: "Plato" },
+  { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
+  { text: "Focus on being productive instead of busy.", author: "Tim Ferriss" },
+  { text: "Starve your distractions, feed your focus.", author: "Anonymous" },
+  { text: "A year from now you may wish you had started today.", author: "Karen Lamb" },
+  { text: "The pain of discipline is far less than the pain of regret.", author: "Sarah Bombell" },
+  { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
+  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+  { text: "Perseverance is not a long race; it is many short races one after the other.", author: "Walter Elliot" },
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky" },
+  { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
+  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+  { text: "Do one thing every day that scares you.", author: "Eleanor Roosevelt" },
+  { text: "Everything you want is on the other side of fear.", author: "Jack Canfield" },
+  { text: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Anonymous" },
+  { text: "Don't limit your challenges. Challenge your limits.", author: "Anonymous" },
+  { text: "Push yourself, because no one else is going to do it for you.", author: "Anonymous" },
+  { text: "Great things never come from comfort zones.", author: "Anonymous" },
+  { text: "Dream it. Wish it. Do it.", author: "Anonymous" },
+  { text: "Success doesn't just find you. You have to go out and get it.", author: "Anonymous" },
+  { text: "The key to success is to focus on goals, not obstacles.", author: "Anonymous" },
+  { text: "Dream bigger. Do bigger.", author: "Anonymous" },
+  { text: "Don't stop when you're tired. Stop when you're done.", author: "Anonymous" },
+  { text: "Wake up with determination. Go to bed with satisfaction.", author: "Anonymous" },
+  { text: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" },
+  { text: "Little things make big days.", author: "Anonymous" },
+  { text: "It's going to be hard, but hard does not mean impossible.", author: "Anonymous" },
+  { text: "Don't wait for opportunity. Create it.", author: "Anonymous" },
+  { text: "Sometimes later becomes never. Do it now.", author: "Anonymous" },
+  { text: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke" },
+];
+
+export function getRandomQuote(): Quote {
+  return QUOTES[Math.floor(Math.random() * QUOTES.length)] as Quote;
+}

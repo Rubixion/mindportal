@@ -1,0 +1,26 @@
+{
+  "name": "focusforge",
+  "version": "1.0.0",
+  "description": "FocusForge — Forge your focus, one day at a time.",
+  "scripts": {
+    "prebuild": "node scripts/generate-icons.js",
+    "dev": "node scripts/generate-icons.js && vite build --watch",
+    "build": "vite build",
+    "lint": "eslint src tests --ext .ts",
+    "lint:fix": "eslint src tests --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.{ts,html,css}\" \"tests/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.10",
+    "vitest": "^1.5.0"
+  }
+}
