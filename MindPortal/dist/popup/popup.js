@@ -1,12 +1,21 @@
 import "../chunks/modulepreload-polyfill-DaKOjhqt.js";
-import { b as computeScore, s as scoreColor, f as formatDuration, g as formatCountdown } from "../chunks/utils-DXHU2JcO.js";
+import { _ as __vitePreload } from "../chunks/preload-helper-BkSzTOHT.js";
+import { t as toDateString, b as computeScore, f as formatDuration, s as scoreColor, g as formatCountdown, e as extractDomain } from "../chunks/utils-DXHU2JcO.js";
 import { c as DEFAULT_SETTINGS } from "../chunks/defaults-CSo6VrWZ.js";
+let ChartLib = null;
 let storage = null;
+let notes = "";
 let timerInterval = null;
 let focusInterval = null;
 let selectedGoal = 120;
+let editableProductiveSites = [];
+let editableUnproductiveSites = [];
+const boundTabs = /* @__PURE__ */ new Set();
+let dailyChart = null;
 async function init() {
   storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+  const rawNotes = await chrome.storage.local.get("notes");
+  notes = rawNotes["notes"] ?? "";
   applySize(storage.settings.popupSize ?? "normal");
   const dateEl = document.getElementById("score-date");
   if (dateEl) {
@@ -19,7 +28,7 @@ async function init() {
   if (!storage.settings.onboardingComplete) {
     showOnboarding();
   } else {
-    showMain();
+    showAppShell();
     startPolling();
   }
 }
@@ -45,7 +54,7 @@ document.querySelectorAll(".sz-btn").forEach((btn) => {
 });
 function showOnboarding() {
   document.getElementById("onboarding").classList.remove("hidden");
-  document.getElementById("main").classList.add("hidden");
+  document.getElementById("app-shell").classList.add("hidden");
   const wrap = document.getElementById("ob-ollie-wrap");
   if (wrap) wrap.innerHTML = cloneOllieSVG(60);
   const wrap1 = document.getElementById("ob-ollie-wrap-1");
@@ -87,23 +96,152 @@ async function finishOnboarding() {
   settings.onboardingComplete = true;
   await chrome.storage.local.set({ settings });
   storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-  document.getElementById("onboarding").classList.add("hidden");
-  showMain();
+  showAppShell();
   startPolling();
 }
-function showMain() {
-  document.getElementById("main").classList.remove("hidden");
+function showAppShell() {
   document.getElementById("onboarding").classList.add("hidden");
-  renderAll();
-  bindMainEvents();
+  document.getElementById("app-shell").classList.remove("hidden");
+  editableProductiveSites = [...storage?.settings.productiveSites ?? DEFAULT_SETTINGS.productiveSites];
+  editableUnproductiveSites = [...storage?.settings.unproductiveSites ?? DEFAULT_SETTINGS.unproductiveSites];
+  setupTabs();
+  setupOpenInPage();
+  setupExport();
+  switchTab("home");
 }
-function renderAll() {
+function setupTabs() {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      if (tab) switchTab(tab);
+    });
+  });
+}
+function switchTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach((b) => {
+    b.classList.toggle("active", b.dataset.tab === tab);
+  });
+  document.querySelectorAll(".tab-panel").forEach((p) => {
+    p.classList.toggle("active", p.id === `panel-${tab}`);
+  });
+  if (!boundTabs.has(tab)) {
+    bindTabEvents(tab);
+    boundTabs.add(tab);
+  }
+  renderTab(tab);
+}
+function bindTabEvents(tab) {
+  switch (tab) {
+    case "home":
+      bindHomeEvents();
+      break;
+    case "sites":
+      bindSitesEvents();
+      break;
+    case "goals":
+      bindGoalsEvents();
+      break;
+    case "notes":
+      bindNotesEvents();
+      break;
+    case "profile":
+      bindProfileEvents();
+      break;
+  }
+}
+function renderTab(tab) {
+  switch (tab) {
+    case "home":
+      renderHome();
+      break;
+    case "analytics":
+      requestAnimationFrame(() => {
+        renderAnalytics();
+      });
+      break;
+    case "sites":
+      renderSites();
+      break;
+    case "goals":
+      renderGoalsForm();
+      break;
+    case "notes":
+      renderNotes();
+      break;
+    case "profile":
+      renderProfile();
+      break;
+  }
+}
+function renderHome() {
   if (!storage) return;
   renderPet();
   renderScore();
   renderProgress();
   renderPomodoro();
   renderFocusMode();
+}
+function bindHomeEvents() {
+  document.getElementById("feed-btn")?.addEventListener("click", async () => {
+    const result = await chrome.runtime.sendMessage({ type: "FEED_PET" });
+    if (result.ok) {
+      const wrap = document.getElementById("ollie-wrap");
+      if (wrap) {
+        wrap.className = "ollie-fed";
+        setTimeout(() => {
+          wrap.className = "ollie-happy";
+        }, 700);
+      }
+      const feedBtn = document.getElementById("feed-btn");
+      if (feedBtn) {
+        feedBtn.textContent = "Fed!";
+        feedBtn.classList.add("fed");
+        feedBtn.disabled = true;
+      }
+      storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+      renderPet();
+    } else if (result.reason === "not_enough_work") {
+      const detail = document.getElementById("pet-mood-detail");
+      if (detail) detail.textContent = `Need ${result.needed ?? "some"} more minutes of focus first`;
+    }
+  });
+  document.getElementById("pom-start")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "START_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-pause")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "PAUSE_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-resume")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "START_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-skip")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "SKIP_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-stop")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "STOP_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("btn-focus-activate")?.addEventListener("click", async () => {
+    const sel = document.getElementById("focus-duration");
+    const minutes = Number(sel?.value ?? 30);
+    await chrome.runtime.sendMessage({ type: "ACTIVATE_FOCUS_MODE", minutes });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderFocusMode();
+  });
+  document.getElementById("btn-focus-cancel")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "DEACTIVATE_FOCUS_MODE" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderFocusMode();
+  });
 }
 function cloneOllieSVG(size) {
   const svg = document.getElementById("ollie-svg");
@@ -201,17 +339,17 @@ function renderPet() {
     hungry: "Ollie needs feeding today",
     sad: "Ollie is sad — missed a day"
   };
-  if (moodEl) moodEl.textContent = moodTexts[mood];
+  if (moodEl) moodEl.textContent = moodTexts[mood] ?? "";
   const detailEl = document.getElementById("pet-mood-detail");
   if (detailEl) {
     if (mood === "hungry") {
       const prodSec = storage.dailyData[today]?.productiveSeconds ?? 0;
       const needed = Math.max(0, 20 - Math.floor(prodSec / 60));
-      detailEl.textContent = needed > 0 ? `${needed}m more productive time to unlock feed` : "Ready to be fed!";
+      detailEl.textContent = needed > 0 ? `${needed}m more focus time to unlock feed` : "Ready to be fed!";
     } else if (mood === "happy") {
       detailEl.textContent = `Level ${level} companion · ${pet.totalFeedCount} total feeds`;
     } else {
-      detailEl.textContent = `Hit today's goal to start the streak again`;
+      detailEl.textContent = "Hit today's goal to start the streak again";
     }
   }
   const numEl = document.getElementById("streak-num");
@@ -313,13 +451,14 @@ function renderPomodoro() {
       modeEl.textContent = type;
       modeEl.classList.remove("hidden");
     }
+    const endTime = session.pomodoroEndTime;
     const updateTimer = () => {
-      const remaining = Math.max(0, Math.ceil((session.pomodoroEndTime - Date.now()) / 1e3));
+      const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1e3));
       if (timeEl) timeEl.textContent = formatCountdown(remaining);
     };
     updateTimer();
     timerInterval = setInterval(updateTimer, 500);
-  } else if (session.pomodoroActive === false && session.pomodoroEndTime === null && session.pomodoroSessionCount > 0) {
+  } else if (!session.pomodoroActive && session.pomodoroEndTime === null && session.pomodoroSessionCount > 0) {
     startBtn?.classList.add("hidden");
     pauseBtn?.classList.add("hidden");
     resumeBtn?.classList.remove("hidden");
@@ -358,8 +497,9 @@ function renderFocusMode() {
     activateBtn?.classList.add("hidden");
     durationSel?.classList.add("hidden");
     cancelBtn?.classList.remove("hidden");
+    const endTime = session.focusModeEndTime;
     const updateRemaining = () => {
-      const secs = Math.max(0, Math.ceil((session.focusModeEndTime - Date.now()) / 1e3));
+      const secs = Math.max(0, Math.ceil((endTime - Date.now()) / 1e3));
       if (remainEl) remainEl.textContent = `${formatCountdown(secs)} remaining`;
     };
     updateRemaining();
@@ -372,78 +512,299 @@ function renderFocusMode() {
     cancelBtn?.classList.add("hidden");
   }
 }
-function bindMainEvents() {
-  document.getElementById("feed-btn")?.addEventListener("click", async () => {
-    const result = await chrome.runtime.sendMessage({ type: "FEED_PET" });
-    if (result.ok) {
-      const wrap = document.getElementById("ollie-wrap");
-      if (wrap) {
-        wrap.className = "ollie-fed";
-        setTimeout(() => {
-          wrap.className = "ollie-happy";
-        }, 700);
-      }
-      const feedBtn = document.getElementById("feed-btn");
-      if (feedBtn) {
-        feedBtn.textContent = "Fed!";
-        feedBtn.classList.add("fed");
-        feedBtn.disabled = true;
-      }
-      storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-      renderPet();
-    } else if (result.reason === "not_enough_work") {
-      const detail = document.getElementById("pet-mood-detail");
-      if (detail) detail.textContent = `Need ${result.needed ?? "some"} more minutes of focus first`;
+async function renderAnalytics() {
+  if (!storage) return;
+  if (!ChartLib) {
+    ChartLib = await __vitePreload(() => import("../chunks/auto-CrGn616D.js"), true ? [] : void 0);
+  }
+  const Chart = ChartLib.default;
+  const { streak, dailyData, settings } = storage;
+  const today = toDateString();
+  const todayRecord = dailyData[today];
+  setText("stat-streak", String(streak.current));
+  setText("stat-longest", String(streak.longest));
+  setText("stat-sessions", String(todayRecord?.pomodoroSessionsCompleted ?? 0));
+  const score = todayRecord ? computeScore(todayRecord.productiveSeconds, todayRecord.unproductiveSeconds, settings.dailyGoalMinutes, settings.unproductiveCapMinutes) : 0;
+  setText("stat-score", todayRecord ? String(score) : "—");
+  const days = getLast(7);
+  const prodData = days.map((d) => Math.round((dailyData[d]?.productiveSeconds ?? 0) / 60));
+  const unprodData = days.map((d) => Math.round((dailyData[d]?.unproductiveSeconds ?? 0) / 60));
+  const dayLabels = days.map((d) => (/* @__PURE__ */ new Date(d + "T12:00:00")).toLocaleDateString("en-US", { weekday: "short" }));
+  const canvas = document.getElementById("chart-daily");
+  if (canvas) {
+    if (dailyChart) {
+      dailyChart.destroy();
+      dailyChart = null;
     }
+    dailyChart = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: dayLabels,
+        datasets: [
+          {
+            label: "Productive",
+            data: prodData,
+            backgroundColor: "rgba(100,130,210,0.75)",
+            borderColor: "rgb(100,130,210)",
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: "Unproductive",
+            data: unprodData,
+            backgroundColor: "rgba(248,113,113,0.55)",
+            borderColor: "#f87171",
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: "rgba(255,255,255,0.35)", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.04)" } },
+          y: { ticks: { color: "rgba(255,255,255,0.35)", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.04)" } }
+        }
+      }
+    });
+  }
+  renderStreakCalendar(dailyData, settings);
+  const breakdown = todayRecord?.siteBreakdown ?? {};
+  const breakdownEl = document.getElementById("sites-breakdown");
+  if (breakdownEl) {
+    const sorted = Object.entries(breakdown).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    if (sorted.length === 0) {
+      breakdownEl.innerHTML = `<div class="no-data">No browsing data recorded today</div>`;
+    } else {
+      const max = sorted[0]?.[1] ?? 1;
+      breakdownEl.innerHTML = sorted.map(([domain, secs]) => {
+        const pct = Math.round(secs / max * 100);
+        const cat = settings.productiveSites.some((s) => domain.endsWith(s) || domain === s) ? "prod" : settings.unproductiveSites.some((s) => domain.endsWith(s) || domain === s) ? "unprod" : "neutral";
+        return `
+          <div class="breakdown-row">
+            <div class="breakdown-label">
+              <span class="breakdown-domain">${domain}</span>
+              <span class="breakdown-time">${formatDuration(secs)}</span>
+            </div>
+            <div class="breakdown-track">
+              <div class="breakdown-fill ${cat}" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+}
+function renderStreakCalendar(dailyData, settings) {
+  const container = document.getElementById("streak-calendar");
+  if (!container) return;
+  container.innerHTML = "";
+  const today = toDateString();
+  for (let i = 89; i >= 0; i--) {
+    const d = /* @__PURE__ */ new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = toDateString(d);
+    const record = dailyData[dateStr];
+    const cell = document.createElement("div");
+    cell.className = "cal-day";
+    if (record && record.goalMet) {
+      const s = computeScore(record.productiveSeconds, record.unproductiveSeconds, settings.dailyGoalMinutes, settings.unproductiveCapMinutes);
+      cell.classList.add("productive");
+      if (s >= 80) cell.classList.add("high");
+    }
+    if (dateStr === today) cell.classList.add("today");
+    cell.title = dateStr;
+    container.appendChild(cell);
+  }
+}
+function renderSites() {
+  renderTagList("productive-tags", editableProductiveSites, "productive");
+  renderTagList("unproductive-tags", editableUnproductiveSites, "unproductive");
+}
+function renderTagList(containerId, sites, type) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = "";
+  sites.forEach((site, idx) => {
+    const tag = document.createElement("div");
+    tag.className = `mp-tag ${type}`;
+    tag.innerHTML = `<span>${site}</span><button class="mp-tag-remove" data-idx="${idx}" data-type="${type}" aria-label="Remove">×</button>`;
+    tag.querySelector(".mp-tag-remove")?.addEventListener("click", () => {
+      if (type === "productive") editableProductiveSites.splice(idx, 1);
+      else editableUnproductiveSites.splice(idx, 1);
+      renderTagList(containerId, type === "productive" ? editableProductiveSites : editableUnproductiveSites, type);
+    });
+    container.appendChild(tag);
   });
-  document.getElementById("pom-start")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ type: "START_POMODORO" });
-    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderPomodoro();
+}
+function bindSitesEvents() {
+  setupSiteAdder("productive-input", "btn-add-productive", "productive");
+  setupSiteAdder("unproductive-input", "btn-add-unproductive", "unproductive");
+  document.getElementById("btn-save-sites")?.addEventListener("click", saveSites);
+}
+function setupSiteAdder(inputId, btnId, type) {
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  const containerId = type === "productive" ? "productive-tags" : "unproductive-tags";
+  const doAdd = () => {
+    if (!input) return;
+    const raw = input.value.trim();
+    if (!raw) return;
+    const domain = extractDomain(raw);
+    if (!domain) return;
+    const list = type === "productive" ? editableProductiveSites : editableUnproductiveSites;
+    if (!list.includes(domain)) {
+      list.push(domain);
+      renderTagList(containerId, list, type);
+    }
+    input.value = "";
+  };
+  btn?.addEventListener("click", doAdd);
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doAdd();
   });
-  document.getElementById("pom-pause")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ type: "PAUSE_POMODORO" });
-    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderPomodoro();
+}
+async function saveSites() {
+  if (!storage) return;
+  const newSettings = {
+    ...storage.settings,
+    productiveSites: [...editableProductiveSites],
+    unproductiveSites: [...editableUnproductiveSites]
+  };
+  await chrome.storage.local.set({ settings: newSettings });
+  storage.settings = newSettings;
+  flashStatus("save-sites-status", "Saved!");
+}
+function renderGoalsForm() {
+  if (!storage) return;
+  const s = storage.settings;
+  setInputVal("g-goal", s.dailyGoalMinutes);
+  setInputVal("g-cap", s.unproductiveCapMinutes);
+  setInputVal("g-work", s.pomodoroWorkMinutes);
+  setInputVal("g-short-break", s.pomodoroShortBreakMinutes);
+  setInputVal("g-long-break", s.pomodoroLongBreakMinutes);
+  setInputVal("g-focus-default", s.focusModeDefaultMinutes);
+  const warningRadio = document.querySelector(`input[name="warning-mode"][value="${s.warningMode}"]`);
+  if (warningRadio) warningRadio.checked = true;
+  const autoFocus = document.getElementById("g-auto-focus");
+  if (autoFocus) autoFocus.checked = s.pomodoroAutoFocusMode;
+  const gracePeriod = document.getElementById("g-grace-period");
+  if (gracePeriod) gracePeriod.checked = s.gracePeriodEnabled;
+}
+function bindGoalsEvents() {
+  document.getElementById("btn-save-goals")?.addEventListener("click", saveGoals);
+}
+async function saveGoals() {
+  if (!storage) return;
+  const warningMode = document.querySelector('input[name="warning-mode"]:checked')?.value;
+  const newSettings = {
+    ...storage.settings,
+    dailyGoalMinutes: numVal("g-goal") || storage.settings.dailyGoalMinutes,
+    unproductiveCapMinutes: numVal("g-cap") ?? storage.settings.unproductiveCapMinutes,
+    warningMode: warningMode ?? storage.settings.warningMode,
+    pomodoroWorkMinutes: numVal("g-work") || storage.settings.pomodoroWorkMinutes,
+    pomodoroShortBreakMinutes: numVal("g-short-break") || storage.settings.pomodoroShortBreakMinutes,
+    pomodoroLongBreakMinutes: numVal("g-long-break") || storage.settings.pomodoroLongBreakMinutes,
+    pomodoroAutoFocusMode: document.getElementById("g-auto-focus")?.checked ?? false,
+    focusModeDefaultMinutes: numVal("g-focus-default") || storage.settings.focusModeDefaultMinutes,
+    gracePeriodEnabled: document.getElementById("g-grace-period")?.checked ?? false
+  };
+  await chrome.storage.local.set({ settings: newSettings });
+  storage.settings = newSettings;
+  flashStatus("save-goals-status", "Saved!");
+}
+function renderNotes() {
+  const textarea = document.getElementById("notes-textarea");
+  if (textarea && textarea.value === "") textarea.value = notes;
+  updateNotesCount();
+}
+function bindNotesEvents() {
+  const textarea = document.getElementById("notes-textarea");
+  textarea?.addEventListener("input", updateNotesCount);
+  document.getElementById("btn-save-notes")?.addEventListener("click", async () => {
+    const ta = document.getElementById("notes-textarea");
+    if (!ta) return;
+    notes = ta.value;
+    await chrome.storage.local.set({ notes });
+    flashStatus("save-notes-status", "Saved!");
   });
-  document.getElementById("pom-resume")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ type: "START_POMODORO" });
-    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderPomodoro();
+}
+function updateNotesCount() {
+  const textarea = document.getElementById("notes-textarea");
+  const count = document.getElementById("notes-count");
+  if (count && textarea) count.textContent = `${textarea.value.length} chars`;
+}
+function renderProfile() {
+  if (!storage) return;
+  const nameInput = document.getElementById("p-name");
+  if (nameInput) nameInput.value = storage.settings.userName;
+}
+function bindProfileEvents() {
+  document.getElementById("btn-save-profile")?.addEventListener("click", async () => {
+    if (!storage) return;
+    const name = document.getElementById("p-name")?.value.trim() ?? "";
+    const newSettings = { ...storage.settings, userName: name };
+    await chrome.storage.local.set({ settings: newSettings });
+    storage.settings = newSettings;
+    flashStatus("save-profile-status", "Saved!");
   });
-  document.getElementById("pom-skip")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ type: "SKIP_POMODORO" });
-    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderPomodoro();
+  document.getElementById("btn-reset-all")?.addEventListener("click", async () => {
+    if (!confirm("This will permanently delete all your data, streaks, and settings. Continue?")) return;
+    await chrome.storage.local.clear();
+    location.reload();
   });
-  document.getElementById("pom-stop")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ type: "STOP_POMODORO" });
-    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderPomodoro();
+}
+function setupOpenInPage() {
+  document.getElementById("btn-open-page")?.addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("src/options/index.html") });
   });
-  document.getElementById("btn-focus-activate")?.addEventListener("click", async () => {
-    const sel = document.getElementById("focus-duration");
-    const minutes = Number(sel?.value ?? 30);
-    await chrome.runtime.sendMessage({ type: "ACTIVATE_FOCUS_MODE", minutes });
-    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderFocusMode();
-  });
-  document.getElementById("btn-focus-cancel")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ type: "DEACTIVATE_FOCUS_MODE" });
-    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderFocusMode();
-  });
-  document.getElementById("btn-settings")?.addEventListener("click", () => {
-    chrome.runtime.openOptionsPage();
-  });
-  document.getElementById("btn-analytics")?.addEventListener("click", () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("src/options/index.html") + "?tab=analytics" });
+}
+function setupExport() {
+  document.getElementById("btn-export")?.addEventListener("click", () => {
+    if (!storage) return;
+    const blob = new Blob([JSON.stringify(storage, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mindportal-export-${toDateString()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   });
 }
 function startPolling() {
   setInterval(async () => {
     storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-    renderAll();
+    const activeTab = document.querySelector(".tab-btn.active")?.dataset.tab;
+    if (activeTab) renderTab(activeTab);
   }, 5e3);
+}
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+function setInputVal(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = String(value);
+}
+function numVal(id) {
+  return parseInt(document.getElementById(id)?.value ?? "0", 10);
+}
+function flashStatus(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add("visible");
+  setTimeout(() => el.classList.remove("visible"), 2500);
+}
+function getLast(n) {
+  const result = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = /* @__PURE__ */ new Date();
+    d.setDate(d.getDate() - i);
+    result.push(toDateString(d));
+  }
+  return result;
 }
 document.addEventListener("DOMContentLoaded", init);

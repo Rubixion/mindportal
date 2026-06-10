@@ -5,6 +5,7 @@
   <title>MindPortal</title>
   <script type="module" crossorigin src="/popup/popup.js"></script>
   <link rel="modulepreload" crossorigin href="/chunks/modulepreload-polyfill-DaKOjhqt.js">
+  <link rel="modulepreload" crossorigin href="/chunks/preload-helper-BkSzTOHT.js">
   <link rel="modulepreload" crossorigin href="/chunks/utils-DXHU2JcO.js">
   <link rel="modulepreload" crossorigin href="/chunks/defaults-CSo6VrWZ.js">
   <link rel="stylesheet" crossorigin href="/assets/popup.css">
@@ -12,23 +13,29 @@
 <body class="size-normal">
 <div id="app">
 
-  <!-- ── Header (always visible) ───────────────── -->
+  <!-- ── Header ───────────────────────────────────────────────────────── -->
   <header id="header">
     <div class="brand">
       <div class="brand-dot">M</div>
       MindPortal
     </div>
-    <div class="size-btns">
-      <button class="sz-btn" data-size="mini"   title="Compact">S</button>
-      <button class="sz-btn active" data-size="normal" title="Normal">M</button>
-      <button class="sz-btn" data-size="large"  title="Expanded">L</button>
+    <div class="header-right">
+      <button id="btn-open-page" class="btn-icon" title="Open full page">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M7 1h4v4M11 1L6 6M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="size-btns">
+        <button class="sz-btn" data-size="mini"   title="Compact">S</button>
+        <button class="sz-btn active" data-size="normal" title="Normal">M</button>
+        <button class="sz-btn" data-size="large"  title="Expanded">L</button>
+      </div>
     </div>
   </header>
 
-  <!-- ── Onboarding (shown on first run) ───────── -->
+  <!-- ── Onboarding ────────────────────────────────────────────────────── -->
   <div id="onboarding" class="hidden">
 
-    <!-- Step 0: Welcome -->
     <div id="ob-0" class="ob-step">
       <div id="ob-ollie-wrap"></div>
       <p class="ob-eyebrow">Your focus companion</p>
@@ -37,7 +44,6 @@
       <button class="btn-primary" id="ob-next-0">Let's go</button>
     </div>
 
-    <!-- Step 1: Name -->
     <div id="ob-1" class="ob-step hidden">
       <div id="ob-ollie-wrap-1"></div>
       <p class="ob-eyebrow">Setup 1 of 2</p>
@@ -46,11 +52,10 @@
       <button class="btn-primary" id="ob-next-1">Continue</button>
     </div>
 
-    <!-- Step 2: Goal -->
     <div id="ob-2" class="ob-step hidden">
       <p class="ob-eyebrow">Setup 2 of 2</p>
       <h2 class="ob-title">Daily focus goal</h2>
-      <p class="ob-body">How much productive browser time do you want to hit each day?</p>
+      <p class="ob-body">How much productive browser time do you want each day?</p>
       <div class="goal-grid" id="goal-grid">
         <button class="goal-opt" data-val="60">1 hour</button>
         <button class="goal-opt" data-val="90">1.5 hours</button>
@@ -62,160 +67,396 @@
 
   </div>
 
-  <!-- ── Main view ──────────────────────────────── -->
-  <div id="main" class="hidden">
+  <!-- ── App shell (post-onboarding) ──────────────────────────────────── -->
+  <div id="app-shell" class="hidden">
 
-    <!-- Pet row -->
-    <div id="pet-row">
-      <div id="ollie-wrap" class="ollie-hungry">
-        <svg id="ollie-svg" viewBox="0 0 64 78" xmlns="http://www.w3.org/2000/svg" width="60" height="73">
-          <!-- Ear tufts -->
-          <path d="M15 19 L10 5 L22 15Z" fill="#191929"/>
-          <path d="M49 19 L54 5 L42 15Z" fill="#191929"/>
-          <!-- Head -->
-          <circle cx="32" cy="31" r="21" fill="#191929"/>
-          <!-- Body -->
-          <ellipse cx="32" cy="59" rx="17" ry="17" fill="#191929"/>
-          <!-- Belly -->
-          <ellipse cx="32" cy="61" rx="10" ry="11" fill="#20203a"/>
-          <!-- Wing L -->
-          <ellipse cx="15" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(-12 15 58)"/>
-          <!-- Wing R -->
-          <ellipse cx="49" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(12 49 58)"/>
-          <!-- Eye socket L -->
-          <circle cx="21" cy="30" r="10" fill="#0d0d1c"/>
-          <!-- Eye socket R -->
-          <circle cx="43" cy="30" r="10" fill="#0d0d1c"/>
-          <!-- Iris L -->
-          <circle id="ollie-iris-l" cx="21" cy="30" r="7" fill="rgb(100,130,210)"/>
-          <!-- Iris R -->
-          <circle id="ollie-iris-r" cx="43" cy="30" r="7" fill="rgb(100,130,210)"/>
-          <!-- Pupil L -->
-          <circle id="ollie-pupil-l" cx="21" cy="30" r="4" fill="#08081a"/>
-          <!-- Pupil R -->
-          <circle id="ollie-pupil-r" cx="43" cy="30" r="4" fill="#08081a"/>
-          <!-- Shine L -->
-          <circle cx="23" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
-          <!-- Shine R -->
-          <circle cx="45" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
-          <!-- Beak -->
-          <path id="ollie-beak" d="M28 36 L32 43 L36 36Z" fill="#f5a623"/>
-          <!-- Cheek L (happy) -->
-          <circle id="ollie-cheek-l" cx="11" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
-          <!-- Cheek R (happy) -->
-          <circle id="ollie-cheek-r" cx="53" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
-          <!-- Tear (sad) -->
-          <ellipse id="ollie-tear" cx="21" cy="39" rx="1.5" ry="2.5" fill="rgb(100,170,255)" opacity="0"/>
-          <!-- Feet L -->
-          <path d="M24 74 L20 78 M24 74 L24 78 M24 74 L28 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
-          <!-- Feet R -->
-          <path d="M40 74 L36 78 M40 74 L40 78 M40 74 L44 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
-        </svg>
-      </div>
+    <!-- Tab navigation -->
+    <nav id="tab-nav">
+      <button class="tab-btn active" data-tab="home">Home</button>
+      <button class="tab-btn" data-tab="analytics">Analytics</button>
+      <button class="tab-btn" data-tab="sites">Sites</button>
+      <button class="tab-btn" data-tab="goals">Goals</button>
+      <button class="tab-btn" data-tab="notes">Notes</button>
+      <button class="tab-btn" data-tab="language">Language</button>
+      <button class="tab-btn" data-tab="profile">Profile</button>
+    </nav>
 
-      <div id="pet-info">
-        <div class="pet-greeting" id="pet-greeting">Hi there!</div>
-        <div class="pet-mood-text" id="pet-mood-text">Ollie is waiting</div>
-        <div class="pet-mood-detail mini-hide" id="pet-mood-detail"></div>
-        <div class="streak-chip">
-          <span class="streak-num" id="streak-num">0</span>
-          <span>day streak</span>
+    <!-- Scrollable content area -->
+    <div id="tab-content">
+
+      <!-- ── Home panel ─────────────────────────────────────────────── -->
+      <div class="tab-panel active" id="panel-home">
+
+        <!-- Pet row -->
+        <div id="pet-row">
+          <div id="ollie-wrap" class="ollie-hungry">
+            <svg id="ollie-svg" viewBox="0 0 64 78" xmlns="http://www.w3.org/2000/svg" width="60" height="73">
+              <path d="M15 19 L10 5 L22 15Z" fill="#191929"/>
+              <path d="M49 19 L54 5 L42 15Z" fill="#191929"/>
+              <circle cx="32" cy="31" r="21" fill="#191929"/>
+              <ellipse cx="32" cy="59" rx="17" ry="17" fill="#191929"/>
+              <ellipse cx="32" cy="61" rx="10" ry="11" fill="#20203a"/>
+              <ellipse cx="15" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(-12 15 58)"/>
+              <ellipse cx="49" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(12 49 58)"/>
+              <circle cx="21" cy="30" r="10" fill="#0d0d1c"/>
+              <circle cx="43" cy="30" r="10" fill="#0d0d1c"/>
+              <circle id="ollie-iris-l" cx="21" cy="30" r="7" fill="rgb(100,130,210)"/>
+              <circle id="ollie-iris-r" cx="43" cy="30" r="7" fill="rgb(100,130,210)"/>
+              <circle id="ollie-pupil-l" cx="21" cy="30" r="4" fill="#08081a"/>
+              <circle id="ollie-pupil-r" cx="43" cy="30" r="4" fill="#08081a"/>
+              <circle cx="23" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
+              <circle cx="45" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
+              <path id="ollie-beak" d="M28 36 L32 43 L36 36Z" fill="#f5a623"/>
+              <circle id="ollie-cheek-l" cx="11" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
+              <circle id="ollie-cheek-r" cx="53" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
+              <ellipse id="ollie-tear" cx="21" cy="39" rx="1.5" ry="2.5" fill="rgb(100,170,255)" opacity="0"/>
+              <path d="M24 74 L20 78 M24 74 L24 78 M24 74 L28 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
+              <path d="M40 74 L36 78 M40 74 L40 78 M40 74 L44 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+
+          <div id="pet-info">
+            <div class="pet-greeting" id="pet-greeting">Hi there!</div>
+            <div class="pet-mood-text" id="pet-mood-text">Ollie is waiting</div>
+            <div class="pet-mood-detail mini-hide" id="pet-mood-detail"></div>
+            <div class="streak-chip">
+              <span class="streak-num" id="streak-num">0</span>
+              <span>day streak</span>
+            </div>
+          </div>
+
+          <button id="feed-btn" disabled>Feed Ollie</button>
         </div>
-      </div>
 
-      <button id="feed-btn" disabled>Feed Ollie</button>
-    </div>
-
-    <!-- Score -->
-    <div id="score-card">
-      <div id="score-ring-wrap">
-        <svg viewBox="0 0 68 68" width="68" height="68" id="score-svg">
-          <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
-          <circle id="score-arc" cx="34" cy="34" r="28" fill="none"
-            stroke="rgb(100,130,210)" stroke-width="6"
-            stroke-dasharray="175.9" stroke-dashoffset="175.9"
-            stroke-linecap="round" transform="rotate(-90 34 34)"/>
-        </svg>
-        <span id="score-num">0</span>
-      </div>
-      <div class="score-meta mini-hide">
-        <div class="score-label-text">Today's score</div>
-        <div class="score-grade" id="score-grade">—</div>
-        <div class="score-sub" id="score-sub"></div>
-        <div class="score-date" id="score-date"></div>
-      </div>
-    </div>
-
-    <!-- Progress bars -->
-    <div id="progress-card" class="mini-hide">
-      <div class="prog-row">
-        <div class="prog-header">
-          <span class="prog-label">Productive</span>
-          <span class="prog-val" id="prod-val">0m / 2h</span>
+        <!-- Score -->
+        <div id="score-card">
+          <div id="score-ring-wrap">
+            <svg viewBox="0 0 68 68" width="68" height="68" id="score-svg">
+              <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+              <circle id="score-arc" cx="34" cy="34" r="28" fill="none"
+                stroke="rgb(100,130,210)" stroke-width="6"
+                stroke-dasharray="175.9" stroke-dashoffset="175.9"
+                stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            </svg>
+            <span id="score-num">0</span>
+          </div>
+          <div class="score-meta mini-hide">
+            <div class="score-label-text">Today's score</div>
+            <div class="score-grade" id="score-grade">—</div>
+            <div class="score-sub" id="score-sub"></div>
+            <div class="score-date" id="score-date"></div>
+          </div>
         </div>
-        <div class="prog-track"><div class="prog-fill accent" id="prod-bar"></div></div>
-      </div>
-      <div class="prog-row">
-        <div class="prog-header">
-          <span class="prog-label">Distractions</span>
-          <span class="prog-val" id="unprod-val">0m / 30m</span>
+
+        <!-- Progress bars -->
+        <div id="progress-card" class="mini-hide">
+          <div class="prog-row">
+            <div class="prog-header">
+              <span class="prog-label">Productive</span>
+              <span class="prog-val" id="prod-val">0m / 2h</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill accent" id="prod-bar"></div></div>
+          </div>
+          <div class="prog-row">
+            <div class="prog-header">
+              <span class="prog-label">Distractions</span>
+              <span class="prog-val" id="unprod-val">0m / 30m</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill dim" id="unprod-bar"></div></div>
+          </div>
+          <div id="top-sites" class="large-only"></div>
         </div>
-        <div class="prog-track"><div class="prog-fill dim" id="unprod-bar"></div></div>
-      </div>
-      <div id="top-sites" class="large-only"></div>
-    </div>
 
-    <!-- Pomodoro timer -->
-    <div id="timer-card">
-      <div id="timer-header">
-        <span class="section-eyebrow">Study Timer</span>
-        <span id="session-count"></span>
-      </div>
-      <div id="timer-display-row">
-        <span id="timer-time">--:--</span>
-        <span id="timer-mode-text" class="hidden"></span>
-      </div>
-      <div id="timer-controls">
-        <button class="btn-secondary hi" id="pom-start">Start session</button>
-        <button class="btn-secondary hidden" id="pom-pause">Pause</button>
-        <button class="btn-secondary hidden" id="pom-resume">Resume</button>
-        <button class="btn-secondary hidden" id="pom-skip">Skip</button>
-        <button class="btn-ghost hidden" id="pom-stop">Stop</button>
-      </div>
-    </div>
+        <!-- Study Timer -->
+        <div id="timer-card">
+          <div id="timer-header">
+            <span class="section-eyebrow">Study Timer</span>
+            <span id="session-count"></span>
+          </div>
+          <div id="timer-display-row">
+            <span id="timer-time">--:--</span>
+            <span id="timer-mode-text" class="hidden"></span>
+          </div>
+          <div id="timer-controls">
+            <button class="btn-secondary hi" id="pom-start">Start session</button>
+            <button class="btn-secondary hidden" id="pom-pause">Pause</button>
+            <button class="btn-secondary hidden" id="pom-resume">Resume</button>
+            <button class="btn-secondary hidden" id="pom-skip">Skip</button>
+            <button class="btn-ghost hidden" id="pom-stop">Stop</button>
+          </div>
+        </div>
 
-    <!-- Focus mode row -->
-    <div id="focus-row">
-      <!-- Idle state -->
-      <div id="focus-idle" class="focus-info" style="flex:1">
-        <div class="focus-label">Focus Mode</div>
-        <div class="focus-sub">Hard-block all distracting sites</div>
-      </div>
-      <!-- Active state -->
-      <div id="focus-active" class="focus-info hidden" style="flex:1">
-        <div class="focus-active-label">Focus Mode · Active</div>
-        <div id="focus-remaining">--:-- remaining</div>
-      </div>
-      <div class="focus-controls">
-        <select id="focus-duration" title="Duration">
-          <option value="15">15m</option>
-          <option value="30" selected>30m</option>
-          <option value="60">1h</option>
-          <option value="90">90m</option>
-          <option value="120">2h</option>
-        </select>
-        <button class="btn-secondary hi" id="btn-focus-activate">Activate</button>
-        <button class="btn-danger hidden" id="btn-focus-cancel">Cancel</button>
-      </div>
-    </div>
+        <!-- Focus mode -->
+        <div id="focus-row">
+          <div id="focus-idle" class="focus-info" style="flex:1">
+            <div class="focus-label">Focus Mode</div>
+            <div class="focus-sub">Hard-block all distracting sites</div>
+          </div>
+          <div id="focus-active" class="focus-info hidden" style="flex:1">
+            <div class="focus-active-label">Focus Mode · Active</div>
+            <div id="focus-remaining">--:-- remaining</div>
+          </div>
+          <div class="focus-controls">
+            <select id="focus-duration" title="Duration">
+              <option value="15">15m</option>
+              <option value="30" selected>30m</option>
+              <option value="60">1h</option>
+              <option value="90">90m</option>
+              <option value="120">2h</option>
+            </select>
+            <button class="btn-secondary hi" id="btn-focus-activate">Activate</button>
+            <button class="btn-danger hidden" id="btn-focus-cancel">Cancel</button>
+          </div>
+        </div>
 
-    <!-- Footer actions -->
-    <div id="footer-row">
-      <button class="btn-ghost" id="btn-settings">Settings</button>
-      <button class="btn-ghost" id="btn-analytics">Analytics</button>
-    </div>
+      </div><!-- /panel-home -->
 
-  </div><!-- /main -->
+      <!-- ── Analytics panel ────────────────────────────────────────── -->
+      <div class="tab-panel" id="panel-analytics">
+
+        <div class="panel-section">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-num" id="stat-streak">0</div>
+              <div class="stat-label">Streak</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="stat-longest">0</div>
+              <div class="stat-label">Best</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num" id="stat-sessions">0</div>
+              <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-num accent-text" id="stat-score">—</div>
+              <div class="stat-label">Score</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-eyebrow" style="margin-bottom:8px">Daily Focus (min)</div>
+          <div class="chart-legend" style="margin-bottom:6px">
+            <span class="legend-dot blue"></span>Productive
+            <span class="legend-dot red"></span>Unproductive
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-daily"></canvas>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-eyebrow" style="margin-bottom:8px">Streak Calendar (90 days)</div>
+          <div id="streak-calendar" class="streak-calendar"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-eyebrow" style="margin-bottom:8px">Today's Sites</div>
+          <div id="sites-breakdown" class="sites-breakdown-list"></div>
+        </div>
+
+      </div><!-- /panel-analytics -->
+
+      <!-- ── Sites panel ─────────────────────────────────────────────── -->
+      <div class="tab-panel" id="panel-sites">
+
+        <div class="panel-section">
+          <div class="sites-type-label productive-label">✓ Productive Sites</div>
+          <p class="panel-desc">Time here counts toward your daily goal.</p>
+          <div class="tag-list" id="productive-tags"></div>
+          <div class="add-row">
+            <input type="text" id="productive-input" class="mp-input" placeholder="e.g. notion.so" />
+            <button class="btn-add" id="btn-add-productive">Add</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="sites-type-label unproductive-label">✗ Unproductive Sites</div>
+          <p class="panel-desc">Visiting these triggers a warning / block.</p>
+          <div class="tag-list" id="unproductive-tags"></div>
+          <div class="add-row">
+            <input type="text" id="unproductive-input" class="mp-input" placeholder="e.g. reddit.com" />
+            <button class="btn-add" id="btn-add-unproductive">Add</button>
+          </div>
+        </div>
+
+        <div class="panel-section save-section">
+          <button class="btn-primary" id="btn-save-sites">Save Changes</button>
+          <span class="save-status" id="save-sites-status"></span>
+        </div>
+
+      </div><!-- /panel-sites -->
+
+      <!-- ── Goals panel ─────────────────────────────────────────────── -->
+      <div class="tab-panel" id="panel-goals">
+
+        <div class="panel-section">
+          <div class="section-eyebrow mb-8">Daily Goals</div>
+          <div class="field-row-2">
+            <div class="field">
+              <label class="field-label" for="g-goal">Productive goal (min/day)</label>
+              <input type="number" id="g-goal" class="mp-input num-input" min="10" max="600" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="g-cap">Distraction cap (min/day)</label>
+              <input type="number" id="g-cap" class="mp-input num-input" min="0" max="480" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-eyebrow mb-8">Warning Mode</div>
+          <div class="radio-group">
+            <label class="radio-card">
+              <input type="radio" name="warning-mode" value="warn" />
+              <div class="radio-body">
+                <div class="radio-title">Warn Only</div>
+                <div class="radio-desc">Ask before entering</div>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="warning-mode" value="countdown" />
+              <div class="radio-body">
+                <div class="radio-title">Countdown</div>
+                <div class="radio-desc">5s delay before access</div>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="warning-mode" value="block" />
+              <div class="radio-body">
+                <div class="radio-title">Hard Block</div>
+                <div class="radio-desc">Needs Focus Mode to visit</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-eyebrow mb-8">Study Timer (Pomodoro)</div>
+          <div class="field-row-3">
+            <div class="field">
+              <label class="field-label" for="g-work">Work (min)</label>
+              <input type="number" id="g-work" class="mp-input num-input" min="5" max="90" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="g-short-break">Short break</label>
+              <input type="number" id="g-short-break" class="mp-input num-input" min="1" max="30" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="g-long-break">Long break</label>
+              <input type="number" id="g-long-break" class="mp-input num-input" min="5" max="60" />
+            </div>
+          </div>
+          <label class="toggle-row">
+            <input type="checkbox" id="g-auto-focus" />
+            <span class="toggle-label">Auto-activate Focus Mode during work sessions</span>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-eyebrow mb-8">Focus Mode</div>
+          <div class="field">
+            <label class="field-label" for="g-focus-default">Default duration (min)</label>
+            <input type="number" id="g-focus-default" class="mp-input num-input" min="5" max="480" />
+          </div>
+          <label class="toggle-row" style="margin-top:8px">
+            <input type="checkbox" id="g-grace-period" />
+            <span class="toggle-label">Grace period — one missed day doesn't break streak</span>
+          </label>
+        </div>
+
+        <div class="panel-section save-section">
+          <button class="btn-primary" id="btn-save-goals">Save Changes</button>
+          <span class="save-status" id="save-goals-status"></span>
+        </div>
+
+      </div><!-- /panel-goals -->
+
+      <!-- ── Notes panel ─────────────────────────────────────────────── -->
+      <div class="tab-panel" id="panel-notes">
+
+        <div class="panel-section">
+          <div class="section-eyebrow mb-8">Quick Notes</div>
+          <p class="panel-desc">Jot down tasks, ideas, or reminders. Saves automatically to your browser.</p>
+          <textarea id="notes-textarea" class="notes-area" placeholder="Start writing..."></textarea>
+          <div class="notes-footer">
+            <span class="notes-count" id="notes-count">0 chars</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="save-status" id="save-notes-status"></span>
+              <button class="btn-primary sm" id="btn-save-notes">Save</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /panel-notes -->
+
+      <!-- ── Language panel ──────────────────────────────────────────── -->
+      <div class="tab-panel" id="panel-language">
+
+        <div class="coming-soon-wrap">
+          <div class="coming-soon-icon">🌍</div>
+          <h2 class="coming-soon-title">Language Learning</h2>
+          <p class="coming-soon-body">
+            Build vocabulary and practice languages right from your browser.
+            Daily word challenges, spaced repetition, and progress tracking — coming soon.
+          </p>
+          <div class="coming-soon-chips">
+            <span class="chip">Vocabulary builder</span>
+            <span class="chip">Spaced repetition</span>
+            <span class="chip">Daily challenges</span>
+            <span class="chip">Progress streaks</span>
+          </div>
+          <div class="coming-soon-badge">Coming Soon</div>
+        </div>
+
+      </div><!-- /panel-language -->
+
+      <!-- ── Profile panel ───────────────────────────────────────────── -->
+      <div class="tab-panel" id="panel-profile">
+
+        <div class="panel-section">
+          <div class="section-eyebrow mb-8">Your Name</div>
+          <div class="field">
+            <input type="text" id="p-name" class="mp-input" maxlength="30" placeholder="First name" />
+          </div>
+          <div class="save-section" style="margin-top:10px">
+            <button class="btn-primary sm" id="btn-save-profile">Save</button>
+            <span class="save-status" id="save-profile-status"></span>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-eyebrow mb-8">About MindPortal</div>
+          <div class="about-card">
+            <div class="about-logo">
+              <div class="brand-dot large">M</div>
+            </div>
+            <div class="about-text">
+              <div class="about-name">MindPortal v1.0.0</div>
+              <div class="about-tagline">Forge your focus, one day at a time.</div>
+            </div>
+          </div>
+          <p class="panel-desc" style="margin-top:10px">
+            Track productive vs. unproductive browsing, block distracting sites,
+            run Pomodoro sessions, and build daily discipline streaks.
+          </p>
+        </div>
+
+        <div class="panel-section danger-section">
+          <div class="section-eyebrow mb-8" style="color:rgba(255,100,100,0.6)">Danger Zone</div>
+          <p class="panel-desc">Permanently erase all data, streaks, and settings.</p>
+          <div class="save-section" style="margin-top:8px">
+            <button class="btn-danger-full" id="btn-reset-all">Reset All Data</button>
+            <button class="btn-ghost" id="btn-export">Export JSON</button>
+          </div>
+        </div>
+
+      </div><!-- /panel-profile -->
+
+    </div><!-- /tab-content -->
+  </div><!-- /app-shell -->
+
 </div><!-- /app -->
 </body>
 </html>
