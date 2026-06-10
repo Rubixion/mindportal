@@ -1,3 +1,5 @@
+export type PopupSize = "mini" | "normal" | "large";
+
 export interface Settings {
   userName: string;
   productiveSites: string[];
@@ -14,6 +16,12 @@ export interface Settings {
   breakReminderMinutes: number;
   focusModeDefaultMinutes: number;
   onboardingComplete: boolean;
+  popupSize: PopupSize;
+}
+
+export interface PetState {
+  lastFedDate: string;   // YYYY-MM-DD, empty = never fed
+  totalFeedCount: number;
 }
 
 export interface DayRecord {
@@ -50,8 +58,9 @@ export interface AppStorage {
   dailyData: Record<string, DayRecord>;
   streak: StreakData;
   session: ActiveSession;
-  dismissedToday: string[]; // domains dismissed from warning today
-  lastDismissedDate: string; // YYYY-MM-DD — reset dismissals when date changes
+  dismissedToday: string[];
+  lastDismissedDate: string;
+  pet: PetState;
 }
 
 export type SiteCategory = "productive" | "unproductive" | "neutral";

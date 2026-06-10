@@ -1,138 +1,261 @@
 import "../chunks/modulepreload-polyfill-DaKOjhqt.js";
 import { b as computeScore, s as scoreColor, f as formatDuration, g as formatCountdown } from "../chunks/utils-DXHU2JcO.js";
-const QUOTES = [
-  { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" },
-  { text: "We are what we repeatedly do. Excellence, then, is not an act but a habit.", author: "Aristotle" },
-  { text: "The successful warrior is the average person with laser-like focus.", author: "Bruce Lee" },
-  { text: "Motivation is what gets you started. Habit is what keeps you going.", author: "Jim Ryun" },
-  { text: "You don't rise to the level of your goals, you fall to the level of your systems.", author: "James Clear" },
-  { text: "It's not that I'm so smart, it's just that I stay with problems longer.", author: "Albert Einstein" },
-  { text: "The man who moves a mountain begins by carrying away small stones.", author: "Confucius" },
-  { text: "Small daily improvements over time lead to stunning results.", author: "Robin Sharma" },
-  { text: "The secret of your future is hidden in your daily routine.", author: "Mike Murdock" },
-  { text: "First, forget inspiration. Habit is more dependable.", author: "Octavia Butler" },
-  { text: "Waste no more time arguing what a good person should be. Be one.", author: "Marcus Aurelius" },
-  { text: "Confine yourself to the present.", author: "Marcus Aurelius" },
-  { text: "You have power over your mind, not outside events. Realize this and you will find strength.", author: "Marcus Aurelius" },
-  { text: "The impediment to action advances action. What stands in the way becomes the way.", author: "Marcus Aurelius" },
-  { text: "Luck is what happens when preparation meets opportunity.", author: "Seneca" },
-  { text: "It is not that we have little time, but that we waste a good deal of it.", author: "Seneca" },
-  { text: "Difficulties strengthen the mind as labor does the body.", author: "Seneca" },
-  { text: "No man is free who is not master of himself.", author: "Epictetus" },
-  { text: "Make the best use of what is in your power, and take the rest as it happens.", author: "Epictetus" },
-  { text: "He who is not a good servant will not be a good master.", author: "Plato" },
-  { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
-  { text: "Focus on being productive instead of busy.", author: "Tim Ferriss" },
-  { text: "Starve your distractions, feed your focus.", author: "Anonymous" },
-  { text: "A year from now you may wish you had started today.", author: "Karen Lamb" },
-  { text: "The pain of discipline is far less than the pain of regret.", author: "Sarah Bombell" },
-  { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
-  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
-  { text: "Perseverance is not a long race; it is many short races one after the other.", author: "Walter Elliot" },
-  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-  { text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky" },
-  { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
-  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-  { text: "Do one thing every day that scares you.", author: "Eleanor Roosevelt" },
-  { text: "Everything you want is on the other side of fear.", author: "Jack Canfield" },
-  { text: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Anonymous" },
-  { text: "Don't limit your challenges. Challenge your limits.", author: "Anonymous" },
-  { text: "Push yourself, because no one else is going to do it for you.", author: "Anonymous" },
-  { text: "Great things never come from comfort zones.", author: "Anonymous" },
-  { text: "Dream it. Wish it. Do it.", author: "Anonymous" },
-  { text: "Success doesn't just find you. You have to go out and get it.", author: "Anonymous" },
-  { text: "The key to success is to focus on goals, not obstacles.", author: "Anonymous" },
-  { text: "Dream bigger. Do bigger.", author: "Anonymous" },
-  { text: "Don't stop when you're tired. Stop when you're done.", author: "Anonymous" },
-  { text: "Wake up with determination. Go to bed with satisfaction.", author: "Anonymous" },
-  { text: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" },
-  { text: "Little things make big days.", author: "Anonymous" },
-  { text: "It's going to be hard, but hard does not mean impossible.", author: "Anonymous" },
-  { text: "Don't wait for opportunity. Create it.", author: "Anonymous" },
-  { text: "Sometimes later becomes never. Do it now.", author: "Anonymous" },
-  { text: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke" }
-];
-function getRandomQuote() {
-  return QUOTES[Math.floor(Math.random() * QUOTES.length)];
-}
+import { c as DEFAULT_SETTINGS } from "../chunks/defaults-CSo6VrWZ.js";
 let storage = null;
 let timerInterval = null;
 let focusInterval = null;
+let selectedGoal = 120;
 async function init() {
   storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-  if (!storage.settings.onboardingComplete) {
-    chrome.tabs.create({ url: chrome.runtime.getURL("src/onboarding/index.html") });
-    window.close();
-    return;
+  applySize(storage.settings.popupSize ?? "normal");
+  const dateEl = document.getElementById("score-date");
+  if (dateEl) {
+    dateEl.textContent = (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric"
+    });
   }
-  renderAll();
+  if (!storage.settings.onboardingComplete) {
+    showOnboarding();
+  } else {
+    showMain();
+    startPolling();
+  }
+}
+function applySize(size) {
+  document.body.classList.remove("size-mini", "size-normal", "size-large");
+  document.body.classList.add(`size-${size}`);
+  document.querySelectorAll(".sz-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.size === size);
+  });
+}
+async function saveSize(size) {
+  const raw = await chrome.storage.local.get("settings");
+  const settings = { ...DEFAULT_SETTINGS, ...raw["settings"] ?? {} };
+  settings.popupSize = size;
+  await chrome.storage.local.set({ settings });
+}
+document.querySelectorAll(".sz-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const size = btn.dataset.size;
+    applySize(size);
+    saveSize(size);
+  });
+});
+function showOnboarding() {
+  document.getElementById("onboarding").classList.remove("hidden");
+  document.getElementById("main").classList.add("hidden");
+  const wrap = document.getElementById("ob-ollie-wrap");
+  if (wrap) wrap.innerHTML = cloneOllieSVG(60);
+  const wrap1 = document.getElementById("ob-ollie-wrap-1");
+  if (wrap1) wrap1.innerHTML = cloneOllieSVG(52);
+  applyOllieMood(wrap?.querySelector("svg") ?? null, "happy");
+  applyOllieMood(wrap1?.querySelector("svg") ?? null, "hungry");
+  document.getElementById("ob-next-0")?.addEventListener("click", () => goStep(1));
+  document.getElementById("ob-next-1")?.addEventListener("click", () => {
+    const name = document.getElementById("ob-name")?.value.trim();
+    if (!name) {
+      document.getElementById("ob-name")?.focus();
+      return;
+    }
+    goStep(2);
+  });
+  document.getElementById("ob-name")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("ob-next-1")?.click();
+  });
+  document.querySelectorAll(".goal-opt").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".goal-opt").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedGoal = Number(btn.dataset.val);
+    });
+  });
+  document.getElementById("ob-finish")?.addEventListener("click", finishOnboarding);
+}
+function goStep(step) {
+  document.querySelectorAll(".ob-step").forEach((el) => el.classList.add("hidden"));
+  document.getElementById(`ob-${step}`)?.classList.remove("hidden");
+}
+async function finishOnboarding() {
+  const nameInput = document.getElementById("ob-name");
+  const name = nameInput?.value.trim() || "there";
+  const raw = await chrome.storage.local.get("settings");
+  const settings = { ...DEFAULT_SETTINGS, ...raw["settings"] ?? {} };
+  settings.userName = name;
+  settings.dailyGoalMinutes = selectedGoal;
+  settings.onboardingComplete = true;
+  await chrome.storage.local.set({ settings });
+  storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+  document.getElementById("onboarding").classList.add("hidden");
+  showMain();
   startPolling();
+}
+function showMain() {
+  document.getElementById("main").classList.remove("hidden");
+  document.getElementById("onboarding").classList.add("hidden");
+  renderAll();
+  bindMainEvents();
 }
 function renderAll() {
   if (!storage) return;
-  renderHeader();
+  renderPet();
   renderScore();
-  renderTimeBars();
+  renderProgress();
   renderPomodoro();
   renderFocusMode();
-  renderQuote();
 }
-function renderHeader() {
+function cloneOllieSVG(size) {
+  const svg = document.getElementById("ollie-svg");
+  if (!svg) return "";
+  const clone = svg.cloneNode(true);
+  clone.setAttribute("width", String(size));
+  clone.setAttribute("height", String(Math.round(size * 78 / 64)));
+  clone.removeAttribute("id");
+  return clone.outerHTML;
+}
+function getOllieMood(pet) {
+  if (!pet.lastFedDate) return "hungry";
+  const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  if (pet.lastFedDate === today) return "happy";
+  const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  if (pet.lastFedDate === yesterday) return "hungry";
+  return "sad";
+}
+function getPetLevel(streak) {
+  if (streak >= 60) return 5;
+  if (streak >= 30) return 4;
+  if (streak >= 14) return 3;
+  if (streak >= 7) return 2;
+  return 1;
+}
+function applyOllieMood(svg, mood) {
+  if (!svg) return;
+  const irisL = svg.querySelector("#ollie-iris-l, [id='ollie-iris-l']");
+  const irisR = svg.querySelector("#ollie-iris-r, [id='ollie-iris-r']");
+  const cheekL = svg.querySelector("#ollie-cheek-l, [id='ollie-cheek-l']");
+  const cheekR = svg.querySelector("#ollie-cheek-r, [id='ollie-cheek-r']");
+  const tear = svg.querySelector("#ollie-tear, [id='ollie-tear']");
+  const pupilL = svg.querySelector("#ollie-pupil-l, [id='ollie-pupil-l']");
+  const pupilR = svg.querySelector("#ollie-pupil-r, [id='ollie-pupil-r']");
+  if (mood === "happy") {
+    irisL?.setAttribute("r", "7");
+    irisR?.setAttribute("r", "7");
+    irisL?.setAttribute("cy", "30");
+    irisR?.setAttribute("cy", "30");
+    pupilL?.setAttribute("r", "4");
+    pupilR?.setAttribute("r", "4");
+    cheekL?.setAttribute("opacity", "0.22");
+    cheekR?.setAttribute("opacity", "0.22");
+    tear?.setAttribute("opacity", "0");
+    irisL?.setAttribute("fill", "rgb(100,130,210)");
+    irisR?.setAttribute("fill", "rgb(100,130,210)");
+  } else if (mood === "hungry") {
+    irisL?.setAttribute("r", "6");
+    irisR?.setAttribute("r", "6");
+    irisL?.setAttribute("cy", "30");
+    irisR?.setAttribute("cy", "30");
+    pupilL?.setAttribute("r", "3.5");
+    pupilR?.setAttribute("r", "3.5");
+    cheekL?.setAttribute("opacity", "0");
+    cheekR?.setAttribute("opacity", "0");
+    tear?.setAttribute("opacity", "0");
+    irisL?.setAttribute("fill", "rgb(100,130,210)");
+    irisR?.setAttribute("fill", "rgb(100,130,210)");
+  } else {
+    irisL?.setAttribute("r", "5");
+    irisR?.setAttribute("r", "5");
+    irisL?.setAttribute("cy", "32");
+    irisR?.setAttribute("cy", "32");
+    pupilL?.setAttribute("r", "3");
+    pupilR?.setAttribute("r", "3");
+    pupilL?.setAttribute("cy", "32");
+    pupilR?.setAttribute("cy", "32");
+    cheekL?.setAttribute("opacity", "0");
+    cheekR?.setAttribute("opacity", "0");
+    tear?.setAttribute("opacity", "0.6");
+    irisL?.setAttribute("fill", "rgba(100,130,210,0.5)");
+    irisR?.setAttribute("fill", "rgba(100,130,210,0.5)");
+  }
+}
+function renderPet() {
   if (!storage) return;
-  const { streak, settings } = storage;
-  const el = document.getElementById("streak-count");
-  if (el) el.textContent = String(streak.current);
-  const greetingEl = document.getElementById("greeting");
+  const { pet, streak, settings } = storage;
+  const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const mood = getOllieMood(pet);
+  const level = getPetLevel(streak.current);
+  const wrap = document.getElementById("ollie-wrap");
+  if (wrap) {
+    wrap.className = `ollie-${mood}`;
+    const svg = document.getElementById("ollie-svg");
+    applyOllieMood(svg, mood);
+  }
+  const greetEl = document.getElementById("pet-greeting");
   const hour = (/* @__PURE__ */ new Date()).getHours();
-  const period = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
-  const name = settings.userName ? `, ${settings.userName}` : "";
-  if (greetingEl) greetingEl.textContent = `Good ${period}${name}`;
-  const dateEl = document.getElementById("today-date");
-  if (dateEl) {
-    dateEl.textContent = (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric"
-    });
+  const period = hour < 12 ? "Morning" : hour < 17 ? "Hey" : "Evening";
+  const name = settings.userName || "";
+  if (greetEl) greetEl.textContent = name ? `${period}, ${name}!` : `${period}!`;
+  const moodEl = document.getElementById("pet-mood-text");
+  const moodTexts = {
+    happy: "Ollie is happy — well fed!",
+    hungry: "Ollie needs feeding today",
+    sad: "Ollie is sad — missed a day"
+  };
+  if (moodEl) moodEl.textContent = moodTexts[mood];
+  const detailEl = document.getElementById("pet-mood-detail");
+  if (detailEl) {
+    if (mood === "hungry") {
+      const prodSec = storage.dailyData[today]?.productiveSeconds ?? 0;
+      const needed = Math.max(0, 20 - Math.floor(prodSec / 60));
+      detailEl.textContent = needed > 0 ? `${needed}m more productive time to unlock feed` : "Ready to be fed!";
+    } else if (mood === "happy") {
+      detailEl.textContent = `Level ${level} companion · ${pet.totalFeedCount} total feeds`;
+    } else {
+      detailEl.textContent = `Hit today's goal to start the streak again`;
+    }
+  }
+  const numEl = document.getElementById("streak-num");
+  if (numEl) numEl.textContent = String(streak.current);
+  const feedBtn = document.getElementById("feed-btn");
+  if (feedBtn) {
+    const alreadyFed = pet.lastFedDate === today;
+    const prodSec = storage.dailyData[today]?.productiveSeconds ?? 0;
+    const canFeed = !alreadyFed && prodSec >= 20 * 60;
+    feedBtn.disabled = !canFeed;
+    if (alreadyFed) {
+      feedBtn.textContent = "Fed!";
+      feedBtn.classList.add("fed");
+    } else {
+      feedBtn.textContent = "Feed Ollie";
+      feedBtn.classList.remove("fed");
+    }
   }
 }
 function renderScore() {
   if (!storage) return;
   const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
   const record = storage.dailyData[today];
+  const { settings } = storage;
+  const score = record ? computeScore(record.productiveSeconds, record.unproductiveSeconds, settings.dailyGoalMinutes, settings.unproductiveCapMinutes) : 0;
   const numEl = document.getElementById("score-num");
-  const ringEl = document.getElementById("ring-fill");
-  const sessionsEl = document.getElementById("sessions-label");
-  if (!record) {
-    if (numEl) numEl.textContent = "0";
-    if (ringEl) {
-      ringEl.style.strokeDashoffset = "213.6";
-      ringEl.style.stroke = "#6c63ff";
-    }
-    if (sessionsEl) sessionsEl.textContent = "";
-    return;
-  }
-  const score = computeScore(
-    record.productiveSeconds,
-    record.unproductiveSeconds,
-    storage.settings.dailyGoalMinutes,
-    storage.settings.unproductiveCapMinutes
-  );
+  const arcEl = document.getElementById("score-arc");
+  const gradeEl = document.getElementById("score-grade");
+  const subEl = document.getElementById("score-sub");
   if (numEl) {
     numEl.textContent = String(score);
-    numEl.style.color = scoreColor(score);
+    numEl.style.color = score > 0 ? scoreColor(score) : "rgba(255,255,255,0.3)";
   }
-  if (ringEl) {
-    const circumference = 213.6;
-    const offset = circumference - score / 100 * circumference;
-    ringEl.style.strokeDashoffset = String(offset);
-    ringEl.style.stroke = scoreColor(score);
+  if (arcEl) {
+    const circ = 175.9;
+    arcEl.style.strokeDashoffset = String(circ - score / 100 * circ);
+    arcEl.style.stroke = scoreColor(score);
   }
-  if (sessionsEl && record.pomodoroSessionsCompleted > 0) {
-    sessionsEl.textContent = `🍅 ${record.pomodoroSessionsCompleted} session${record.pomodoroSessionsCompleted !== 1 ? "s" : ""} completed`;
-  }
+  const grade = score >= 90 ? "Excellent" : score >= 70 ? "Good" : score >= 50 ? "Fair" : score > 0 ? "Keep going" : "Not started";
+  if (gradeEl) gradeEl.textContent = grade;
+  const prodMin = record ? Math.floor(record.productiveSeconds / 60) : 0;
+  if (subEl) subEl.textContent = prodMin > 0 ? `${prodMin}m productive today` : "Start a productive session";
 }
-function renderTimeBars() {
+function renderProgress() {
   if (!storage) return;
   const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
   const record = storage.dailyData[today];
@@ -143,123 +266,184 @@ function renderTimeBars() {
   const capSec = settings.unproductiveCapMinutes * 60;
   const prodPct = Math.min(prodSec / goalSec * 100, 100);
   const unprodPct = Math.min(unprodSec / capSec * 100, 100);
-  const prodBar = document.getElementById("productive-bar");
-  const unprodBar = document.getElementById("unproductive-bar");
-  const prodTime = document.getElementById("productive-time");
-  const unprodTime = document.getElementById("unproductive-time");
-  const prodGoal = document.getElementById("productive-goal");
-  const unprodGoal = document.getElementById("unproductive-goal");
+  const prodBar = document.getElementById("prod-bar");
+  const unprodBar = document.getElementById("unprod-bar");
   if (prodBar) prodBar.style.width = `${prodPct}%`;
-  if (unprodBar) unprodBar.style.width = `${unprodPct}%`;
-  if (prodTime) prodTime.textContent = formatDuration(prodSec);
-  if (unprodTime) unprodTime.textContent = formatDuration(unprodSec);
-  if (prodGoal) prodGoal.textContent = `/ ${formatDuration(goalSec)}`;
-  if (unprodGoal) unprodGoal.textContent = `/ ${formatDuration(capSec)}`;
+  if (unprodBar) {
+    unprodBar.style.width = `${unprodPct}%`;
+    unprodBar.className = `prog-fill ${unprodPct >= 100 ? "over" : "dim"}`;
+  }
+  const prodValEl = document.getElementById("prod-val");
+  const unprodValEl = document.getElementById("unprod-val");
+  if (prodValEl) prodValEl.textContent = `${formatDuration(prodSec)} / ${formatDuration(goalSec)}`;
+  if (unprodValEl) unprodValEl.textContent = `${formatDuration(unprodSec)} / ${formatDuration(capSec)}`;
+  const topEl = document.getElementById("top-sites");
+  if (topEl && record) {
+    const sorted = Object.entries(record.siteBreakdown).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    topEl.innerHTML = sorted.length ? sorted.map(
+      ([domain, secs]) => `<div class="top-site-row"><span class="top-site-name">${domain}</span><span class="top-site-time">${formatDuration(secs)}</span></div>`
+    ).join("") : "";
+  }
 }
 function renderPomodoro() {
   if (!storage) return;
   const { session, settings } = storage;
-  const displayEl = document.getElementById("timer-display");
-  const idleControls = document.getElementById("timer-controls-idle");
-  const activeControls = document.getElementById("timer-controls-active");
-  const sessionInfoEl = document.getElementById("session-info");
-  if (timerInterval) clearInterval(timerInterval);
+  const timeEl = document.getElementById("timer-time");
+  const modeEl = document.getElementById("timer-mode-text");
+  const sessionEl = document.getElementById("session-count");
+  const startBtn = document.getElementById("pom-start");
+  const pauseBtn = document.getElementById("pom-pause");
+  const resumeBtn = document.getElementById("pom-resume");
+  const skipBtn = document.getElementById("pom-skip");
+  const stopBtn = document.getElementById("pom-stop");
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
   if (session.pomodoroActive && session.pomodoroEndTime) {
-    idleControls?.classList.add("hidden");
-    activeControls?.classList.remove("hidden");
-    const updateDisplay = () => {
+    startBtn?.classList.add("hidden");
+    pauseBtn?.classList.remove("hidden");
+    resumeBtn?.classList.add("hidden");
+    skipBtn?.classList.remove("hidden");
+    stopBtn?.classList.remove("hidden");
+    const sessionNum = session.pomodoroSessionCount % 4 + (session.pomodoroIsBreak ? 0 : 1);
+    const type = session.pomodoroIsBreak ? session.pomodoroSessionCount % 4 === 0 ? "Long Break" : "Short Break" : "Work";
+    if (sessionEl) sessionEl.textContent = `Session ${sessionNum}/4`;
+    if (modeEl) {
+      modeEl.textContent = type;
+      modeEl.classList.remove("hidden");
+    }
+    const updateTimer = () => {
       const remaining = Math.max(0, Math.ceil((session.pomodoroEndTime - Date.now()) / 1e3));
-      if (displayEl) displayEl.textContent = formatCountdown(remaining);
+      if (timeEl) timeEl.textContent = formatCountdown(remaining);
     };
-    updateDisplay();
-    timerInterval = setInterval(updateDisplay, 500);
-    if (sessionInfoEl) {
-      const sessionNum = session.pomodoroSessionCount % 4 + (session.pomodoroIsBreak ? 0 : 1);
-      const type = session.pomodoroIsBreak ? session.pomodoroSessionCount % 4 === 0 ? "Long Break" : "Short Break" : "Work";
-      sessionInfoEl.textContent = `Session ${sessionNum}/4 · ${type}`;
-    }
-    if (displayEl) displayEl.style.color = session.pomodoroIsBreak ? "#4ade80" : "#e8e8e8";
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 500);
+  } else if (session.pomodoroActive === false && session.pomodoroEndTime === null && session.pomodoroSessionCount > 0) {
+    startBtn?.classList.add("hidden");
+    pauseBtn?.classList.add("hidden");
+    resumeBtn?.classList.remove("hidden");
+    skipBtn?.classList.remove("hidden");
+    stopBtn?.classList.remove("hidden");
+    if (timeEl) timeEl.textContent = formatCountdown(settings.pomodoroWorkMinutes * 60);
+    if (modeEl) modeEl.classList.add("hidden");
+    if (sessionEl) sessionEl.textContent = "Paused";
   } else {
-    idleControls?.classList.remove("hidden");
-    activeControls?.classList.add("hidden");
-    if (displayEl) {
-      displayEl.textContent = formatCountdown(settings.pomodoroWorkMinutes * 60);
-      displayEl.style.color = "#e8e8e8";
-    }
-    if (sessionInfoEl) sessionInfoEl.textContent = `Session 1/4 · Work`;
+    startBtn?.classList.remove("hidden");
+    pauseBtn?.classList.add("hidden");
+    resumeBtn?.classList.add("hidden");
+    skipBtn?.classList.add("hidden");
+    stopBtn?.classList.add("hidden");
+    if (timeEl) timeEl.textContent = formatCountdown(settings.pomodoroWorkMinutes * 60);
+    if (modeEl) modeEl.classList.add("hidden");
+    if (sessionEl) sessionEl.textContent = "";
   }
 }
 function renderFocusMode() {
   if (!storage) return;
   const { session } = storage;
-  const idleRow = document.getElementById("focus-idle-row");
-  const activeRow = document.getElementById("focus-active-row");
-  const remainingEl = document.getElementById("focus-remaining");
-  if (focusInterval) clearInterval(focusInterval);
+  const idleEl = document.getElementById("focus-idle");
+  const activeEl = document.getElementById("focus-active");
+  const activateBtn = document.getElementById("btn-focus-activate");
+  const cancelBtn = document.getElementById("btn-focus-cancel");
+  const durationSel = document.getElementById("focus-duration");
+  const remainEl = document.getElementById("focus-remaining");
+  if (focusInterval) {
+    clearInterval(focusInterval);
+    focusInterval = null;
+  }
   if (session.focusModeActive && session.focusModeEndTime) {
-    idleRow?.classList.add("hidden");
-    activeRow?.classList.remove("hidden");
-    const updateFocus = () => {
-      const remaining = Math.max(0, Math.ceil((session.focusModeEndTime - Date.now()) / 1e3));
-      if (remainingEl) remainingEl.textContent = `${formatCountdown(remaining)} remaining`;
+    idleEl?.classList.add("hidden");
+    activeEl?.classList.remove("hidden");
+    activateBtn?.classList.add("hidden");
+    durationSel?.classList.add("hidden");
+    cancelBtn?.classList.remove("hidden");
+    const updateRemaining = () => {
+      const secs = Math.max(0, Math.ceil((session.focusModeEndTime - Date.now()) / 1e3));
+      if (remainEl) remainEl.textContent = `${formatCountdown(secs)} remaining`;
     };
-    updateFocus();
-    focusInterval = setInterval(updateFocus, 1e3);
+    updateRemaining();
+    focusInterval = setInterval(updateRemaining, 1e3);
   } else {
-    idleRow?.classList.remove("hidden");
-    activeRow?.classList.add("hidden");
+    idleEl?.classList.remove("hidden");
+    activeEl?.classList.add("hidden");
+    activateBtn?.classList.remove("hidden");
+    durationSel?.classList.remove("hidden");
+    cancelBtn?.classList.add("hidden");
   }
 }
-function renderQuote() {
-  const q = getRandomQuote();
-  const textEl = document.getElementById("quote-text");
-  const authorEl = document.getElementById("quote-author");
-  if (textEl) textEl.textContent = `"${q.text}"`;
-  if (authorEl) authorEl.textContent = `— ${q.author}`;
+function bindMainEvents() {
+  document.getElementById("feed-btn")?.addEventListener("click", async () => {
+    const result = await chrome.runtime.sendMessage({ type: "FEED_PET" });
+    if (result.ok) {
+      const wrap = document.getElementById("ollie-wrap");
+      if (wrap) {
+        wrap.className = "ollie-fed";
+        setTimeout(() => {
+          wrap.className = "ollie-happy";
+        }, 700);
+      }
+      const feedBtn = document.getElementById("feed-btn");
+      if (feedBtn) {
+        feedBtn.textContent = "Fed!";
+        feedBtn.classList.add("fed");
+        feedBtn.disabled = true;
+      }
+      storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+      renderPet();
+    } else if (result.reason === "not_enough_work") {
+      const detail = document.getElementById("pet-mood-detail");
+      if (detail) detail.textContent = `Need ${result.needed ?? "some"} more minutes of focus first`;
+    }
+  });
+  document.getElementById("pom-start")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "START_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-pause")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "PAUSE_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-resume")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "START_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-skip")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "SKIP_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("pom-stop")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "STOP_POMODORO" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderPomodoro();
+  });
+  document.getElementById("btn-focus-activate")?.addEventListener("click", async () => {
+    const sel = document.getElementById("focus-duration");
+    const minutes = Number(sel?.value ?? 30);
+    await chrome.runtime.sendMessage({ type: "ACTIVATE_FOCUS_MODE", minutes });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderFocusMode();
+  });
+  document.getElementById("btn-focus-cancel")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "DEACTIVATE_FOCUS_MODE" });
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderFocusMode();
+  });
+  document.getElementById("btn-settings")?.addEventListener("click", () => {
+    chrome.runtime.openOptionsPage();
+  });
+  document.getElementById("btn-analytics")?.addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("src/options/index.html") + "?tab=analytics" });
+  });
 }
-document.getElementById("btn-start")?.addEventListener("click", async () => {
-  await chrome.runtime.sendMessage({ type: "START_POMODORO" });
-  await refresh();
-});
-document.getElementById("btn-pause")?.addEventListener("click", async () => {
-  await chrome.runtime.sendMessage({ type: "PAUSE_POMODORO" });
-  await refresh();
-});
-document.getElementById("btn-skip")?.addEventListener("click", async () => {
-  await chrome.runtime.sendMessage({ type: "SKIP_POMODORO" });
-  await refresh();
-});
-document.getElementById("btn-stop")?.addEventListener("click", async () => {
-  await chrome.runtime.sendMessage({ type: "STOP_POMODORO" });
-  await refresh();
-});
-document.getElementById("btn-focus-activate")?.addEventListener("click", async () => {
-  const select = document.getElementById("focus-duration");
-  const minutes = parseInt(select?.value ?? "30", 10);
-  await chrome.runtime.sendMessage({ type: "ACTIVATE_FOCUS_MODE", minutes });
-  await refresh();
-});
-document.getElementById("btn-focus-cancel")?.addEventListener("click", async () => {
-  const confirmed = confirm(
-    "Are you sure you want to end Focus Mode? Distracting sites will be unblocked."
-  );
-  if (!confirmed) return;
-  await chrome.runtime.sendMessage({ type: "DEACTIVATE_FOCUS_MODE" });
-  await refresh();
-});
-document.getElementById("btn-options")?.addEventListener("click", () => {
-  chrome.runtime.openOptionsPage();
-});
-document.getElementById("btn-analytics")?.addEventListener("click", () => {
-  chrome.tabs.create({ url: chrome.runtime.getURL("src/options/index.html") + "?tab=analytics" });
-});
 function startPolling() {
   setInterval(async () => {
-    await refresh();
+    storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
+    renderAll();
   }, 5e3);
 }
-async function refresh() {
-  storage = await chrome.runtime.sendMessage({ type: "GET_STORAGE" });
-  renderAll();
-}
-init();
+document.addEventListener("DOMContentLoaded", init);

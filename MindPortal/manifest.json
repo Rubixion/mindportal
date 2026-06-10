@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "FocusForge",
+  "name": "MindPortal",
   "version": "1.0.0",
-  "description": "Forge your focus, one day at a time. Track productive time, block distractions, and build discipline streaks.",
+  "description": "Your portal to focused, disciplined work. Track productive time, block distractions, and build discipline streaks.",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
@@ -17,7 +17,7 @@
       "48": "assets/icons/icon48.png",
       "128": "assets/icons/icon128.png"
     },
-    "default_title": "FocusForge"
+    "default_title": "MindPortal"
   },
   "background": {
     "service_worker": "background/service-worker.js",

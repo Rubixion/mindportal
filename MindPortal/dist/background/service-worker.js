@@ -1,4 +1,4 @@
-import { D as DEFAULT_SESSION, a as DEFAULT_STREAK, b as DEFAULT_SETTINGS } from "../chunks/defaults-CCjS-AZq.js";
+import { D as DEFAULT_PET, a as DEFAULT_SESSION, b as DEFAULT_STREAK, c as DEFAULT_SETTINGS } from "../chunks/defaults-CSo6VrWZ.js";
 import { t as toDateString, a as areConsecutiveDays, c as categorizeDomain, b as computeScore, e as extractDomain } from "../chunks/utils-DXHU2JcO.js";
 const scriptRel = "modulepreload";
 const assetsURL = function(dep) {
@@ -71,7 +71,8 @@ async function getStorage() {
     "streak",
     "session",
     "dismissedToday",
-    "lastDismissedDate"
+    "lastDismissedDate",
+    "pet"
   ]);
   return {
     settings: { ...DEFAULT_SETTINGS, ...raw["settings"] },
@@ -79,8 +80,12 @@ async function getStorage() {
     streak: { ...DEFAULT_STREAK, ...raw["streak"] },
     session: { ...DEFAULT_SESSION, ...raw["session"] },
     dismissedToday: raw["dismissedToday"] ?? [],
-    lastDismissedDate: raw["lastDismissedDate"] ?? ""
+    lastDismissedDate: raw["lastDismissedDate"] ?? "",
+    pet: { ...DEFAULT_PET, ...raw["pet"] }
   };
+}
+async function saveSettings(settings) {
+  await chrome.storage.local.set({ settings });
 }
 async function saveSession(session) {
   await chrome.storage.local.set({ session });
@@ -124,24 +129,26 @@ async function addDismissedSite(domain) {
   if (!dismissed.includes(domain)) dismissed.push(domain);
   await chrome.storage.local.set({ dismissedToday: dismissed, lastDismissedDate: today });
 }
+async function savePetState(pet) {
+  await chrome.storage.local.set({ pet });
+}
 const storage = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   addDismissedSite,
   getStorage,
   getTodayRecord,
   saveDayRecord,
+  savePetState,
   saveSession,
+  saveSettings,
   saveStreak
 }, Symbol.toStringTag, { value: "Module" }));
-const ALARM_TICK = "ff_tick";
-const ALARM_MIDNIGHT = "ff_midnight";
-const ALARM_BREAK_REMINDER = "ff_break_reminder";
-const ALARM_POMODORO = "ff_pomodoro";
-const ALARM_FOCUS_MODE = "ff_focus_mode";
-chrome.runtime.onInstalled.addListener(async (details) => {
-  if (details.reason === "install") {
-    chrome.tabs.create({ url: chrome.runtime.getURL("src/onboarding/index.html") });
-  }
+const ALARM_TICK = "mp_tick";
+const ALARM_MIDNIGHT = "mp_midnight";
+const ALARM_BREAK_REMINDER = "mp_break_reminder";
+const ALARM_POMODORO = "mp_pomodoro";
+const ALARM_FOCUS_MODE = "mp_focus_mode";
+chrome.runtime.onInstalled.addListener(async (_details) => {
   await setupAlarms();
 });
 chrome.runtime.onStartup.addListener(async () => {
@@ -364,7 +371,7 @@ async function handlePomodoroEnd() {
 }
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   handleMessage(message).then(sendResponse).catch((err) => {
-    console.error("FocusForge message error:", err);
+    console.error("MindPortal message error:", err);
     sendResponse({ error: String(err) });
   });
   return true;
@@ -434,6 +441,32 @@ async function handleMessage(message) {
   }
   if (type === "TAB_CHANGED") {
     await onTabChange();
+    return { ok: true };
+  }
+  if (type === "FEED_PET") {
+    const storage2 = await getStorage();
+    const today = toDateString();
+    const todayRecord = storage2.dailyData[today];
+    const productiveSecs = todayRecord?.productiveSeconds ?? 0;
+    if (storage2.pet.lastFedDate === today) {
+      return { ok: false, reason: "already_fed" };
+    }
+    if (productiveSecs < 20 * 60) {
+      return { ok: false, reason: "not_enough_work", needed: 20 - Math.floor(productiveSecs / 60) };
+    }
+    const newPet = {
+      lastFedDate: today,
+      totalFeedCount: storage2.pet.totalFeedCount + 1
+    };
+    await savePetState(newPet);
+    return { ok: true, pet: newPet };
+  }
+  if (type === "SAVE_SETTINGS") {
+    const { saveSettings: saveSettings2 } = await __vitePreload(async () => {
+      const { saveSettings: saveSettings3 } = await Promise.resolve().then(() => storage);
+      return { saveSettings: saveSettings3 };
+    }, true ? void 0 : void 0);
+    await saveSettings2(message["settings"]);
     return { ok: true };
   }
   return { error: "Unknown message type" };

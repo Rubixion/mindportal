@@ -1,4 +1,4 @@
-# FocusForge 🔥
+# MindPortal 🔥
 
 > Forge your focus, one day at a time.
 
@@ -49,7 +49,7 @@ npm run format       # Prettier format
 ## Project Structure
 
 ```
-focusforge/
+mindportal/
 ├── manifest.json               # MV3 manifest
 ├── src/
 │   ├── background/

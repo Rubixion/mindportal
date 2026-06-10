@@ -43,7 +43,12 @@ const DEFAULT_SETTINGS = {
   pomodoroAutoFocusMode: false,
   breakReminderMinutes: 50,
   focusModeDefaultMinutes: 30,
-  onboardingComplete: false
+  onboardingComplete: false,
+  popupSize: "normal"
+};
+const DEFAULT_PET = {
+  lastFedDate: "",
+  totalFeedCount: 0
 };
 const DEFAULT_STREAK = {
   current: 0,
@@ -62,7 +67,8 @@ const DEFAULT_SESSION = {
   domainStartTime: null
 };
 export {
-  DEFAULT_SESSION as D,
-  DEFAULT_STREAK as a,
-  DEFAULT_SETTINGS as b
+  DEFAULT_PET as D,
+  DEFAULT_SESSION as a,
+  DEFAULT_STREAK as b,
+  DEFAULT_SETTINGS as c
 };

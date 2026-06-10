@@ -1,5 +1,5 @@
 import "../chunks/modulepreload-polyfill-DaKOjhqt.js";
-import { b as DEFAULT_SETTINGS, D as DEFAULT_SESSION, a as DEFAULT_STREAK } from "../chunks/defaults-CCjS-AZq.js";
+import { c as DEFAULT_SETTINGS, a as DEFAULT_SESSION, b as DEFAULT_STREAK } from "../chunks/defaults-CSo6VrWZ.js";
 import { e as extractDomain } from "../chunks/utils-DXHU2JcO.js";
 let currentStep = 0;
 let selectedMode = "countdown";

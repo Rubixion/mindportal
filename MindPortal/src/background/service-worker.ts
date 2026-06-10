@@ -4,6 +4,7 @@ import {
   saveStreak,
   saveDayRecord,
   getTodayRecord,
+  savePetState,
 } from "../shared/storage";
 import {
   toDateString,
@@ -15,18 +16,15 @@ import {
 import type { ActiveSession, DayRecord, StreakData } from "../shared/types";
 
 // Alarm names
-const ALARM_TICK = "ff_tick";
-const ALARM_MIDNIGHT = "ff_midnight";
-const ALARM_BREAK_REMINDER = "ff_break_reminder";
-const ALARM_POMODORO = "ff_pomodoro";
-const ALARM_FOCUS_MODE = "ff_focus_mode";
+const ALARM_TICK = "mp_tick";
+const ALARM_MIDNIGHT = "mp_midnight";
+const ALARM_BREAK_REMINDER = "mp_break_reminder";
+const ALARM_POMODORO = "mp_pomodoro";
+const ALARM_FOCUS_MODE = "mp_focus_mode";
 
 // ─── Install / Startup ────────────────────────────────────────────────────────
 
-chrome.runtime.onInstalled.addListener(async (details) => {
-  if (details.reason === "install") {
-    chrome.tabs.create({ url: chrome.runtime.getURL("src/onboarding/index.html") });
-  }
+chrome.runtime.onInstalled.addListener(async (_details) => {
   await setupAlarms();
 });
 
@@ -327,7 +325,7 @@ async function handlePomodoroEnd() {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   handleMessage(message).then(sendResponse).catch((err) => {
-    console.error("FocusForge message error:", err);
+    console.error("MindPortal message error:", err);
     sendResponse({ error: String(err) });
   });
   return true; // async response
@@ -404,6 +402,33 @@ async function handleMessage(message: Record<string, unknown>): Promise<unknown>
 
   if (type === "TAB_CHANGED") {
     await onTabChange();
+    return { ok: true };
+  }
+
+  if (type === "FEED_PET") {
+    const storage = await getStorage();
+    const today = toDateString();
+    const todayRecord = storage.dailyData[today];
+    const productiveSecs = todayRecord?.productiveSeconds ?? 0;
+
+    if (storage.pet.lastFedDate === today) {
+      return { ok: false, reason: "already_fed" };
+    }
+    if (productiveSecs < 20 * 60) {
+      return { ok: false, reason: "not_enough_work", needed: 20 - Math.floor(productiveSecs / 60) };
+    }
+
+    const newPet = {
+      lastFedDate: today,
+      totalFeedCount: storage.pet.totalFeedCount + 1,
+    };
+    await savePetState(newPet);
+    return { ok: true, pet: newPet };
+  }
+
+  if (type === "SAVE_SETTINGS") {
+    const { saveSettings } = await import("../shared/storage");
+    await saveSettings(message["settings"] as import("../shared/types").Settings);
     return { ok: true };
   }
 

@@ -1,4 +1,4 @@
-import type { Settings, StreakData, ActiveSession } from "./types";
+import type { Settings, StreakData, ActiveSession, PetState } from "./types";
 
 export const DEFAULT_SETTINGS: Settings = {
   userName: "",
@@ -46,6 +46,12 @@ export const DEFAULT_SETTINGS: Settings = {
   breakReminderMinutes: 50,
   focusModeDefaultMinutes: 30,
   onboardingComplete: false,
+  popupSize: "normal",
+};
+
+export const DEFAULT_PET: PetState = {
+  lastFedDate: "",
+  totalFeedCount: 0,
 };
 
 export const DEFAULT_STREAK: StreakData = {

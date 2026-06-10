@@ -1,6 +1,6 @@
 import "../chunks/modulepreload-polyfill-DaKOjhqt.js";
 import { t as toDateString, b as computeScore, f as formatDuration, e as extractDomain } from "../chunks/utils-DXHU2JcO.js";
-import { b as DEFAULT_SETTINGS } from "../chunks/defaults-CCjS-AZq.js";
+import { c as DEFAULT_SETTINGS } from "../chunks/defaults-CSo6VrWZ.js";
 let storage = null;
 let editableProductiveSites = [];
 let editableUnproductiveSites = [];
@@ -329,7 +329,7 @@ function setupActions() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `focusforge-export-${toDateString()}.json`;
+    a.download = `mindportal-export-${toDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   });

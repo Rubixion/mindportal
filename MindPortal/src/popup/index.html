@@ -1,137 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>FocusForge</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./popup.css" />
-  </head>
-  <body>
-    <!-- Header -->
-    <header>
-      <div class="brand">
-        <span class="flame">🔥</span>
-        <span class="brand-name">FocusForge</span>
+<head>
+  <meta charset="UTF-8" />
+  <title>MindPortal</title>
+  <link rel="stylesheet" href="./popup.css" />
+</head>
+<body class="size-normal">
+<div id="app">
+
+  <!-- ── Header (always visible) ───────────────── -->
+  <header id="header">
+    <div class="brand">
+      <div class="brand-dot">M</div>
+      MindPortal
+    </div>
+    <div class="size-btns">
+      <button class="sz-btn" data-size="mini"   title="Compact">S</button>
+      <button class="sz-btn active" data-size="normal" title="Normal">M</button>
+      <button class="sz-btn" data-size="large"  title="Expanded">L</button>
+    </div>
+  </header>
+
+  <!-- ── Onboarding (shown on first run) ───────── -->
+  <div id="onboarding" class="hidden">
+
+    <!-- Step 0: Welcome -->
+    <div id="ob-0" class="ob-step">
+      <div id="ob-ollie-wrap"></div>
+      <p class="ob-eyebrow">Your focus companion</p>
+      <h2 class="ob-title">Meet Ollie.</h2>
+      <p class="ob-body">Feed Ollie every day by hitting your focus goals. Miss a day and Ollie gets hungry.</p>
+      <button class="btn-primary" id="ob-next-0">Let's go</button>
+    </div>
+
+    <!-- Step 1: Name -->
+    <div id="ob-1" class="ob-step hidden">
+      <div id="ob-ollie-wrap-1"></div>
+      <p class="ob-eyebrow">Setup 1 of 2</p>
+      <h2 class="ob-title">What's your name?</h2>
+      <input class="ob-input" id="ob-name" type="text" placeholder="Your first name" maxlength="20" autocomplete="off" />
+      <button class="btn-primary" id="ob-next-1">Continue</button>
+    </div>
+
+    <!-- Step 2: Goal -->
+    <div id="ob-2" class="ob-step hidden">
+      <p class="ob-eyebrow">Setup 2 of 2</p>
+      <h2 class="ob-title">Daily focus goal</h2>
+      <p class="ob-body">How much productive browser time do you want to hit each day?</p>
+      <div class="goal-grid" id="goal-grid">
+        <button class="goal-opt" data-val="60">1 hour</button>
+        <button class="goal-opt" data-val="90">1.5 hours</button>
+        <button class="goal-opt active" data-val="120">2 hours</button>
+        <button class="goal-opt" data-val="180">3 hours</button>
       </div>
-      <div class="streak-badge" id="streak-badge" title="Current streak">
-        <span id="streak-count">0</span>
-        <span class="streak-label">day streak</span>
+      <button class="btn-primary" id="ob-finish">Start tracking</button>
+    </div>
+
+  </div>
+
+  <!-- ── Main view ──────────────────────────────── -->
+  <div id="main" class="hidden">
+
+    <!-- Pet row -->
+    <div id="pet-row">
+      <div id="ollie-wrap" class="ollie-hungry">
+        <svg id="ollie-svg" viewBox="0 0 64 78" xmlns="http://www.w3.org/2000/svg" width="60" height="73">
+          <!-- Ear tufts -->
+          <path d="M15 19 L10 5 L22 15Z" fill="#191929"/>
+          <path d="M49 19 L54 5 L42 15Z" fill="#191929"/>
+          <!-- Head -->
+          <circle cx="32" cy="31" r="21" fill="#191929"/>
+          <!-- Body -->
+          <ellipse cx="32" cy="59" rx="17" ry="17" fill="#191929"/>
+          <!-- Belly -->
+          <ellipse cx="32" cy="61" rx="10" ry="11" fill="#20203a"/>
+          <!-- Wing L -->
+          <ellipse cx="15" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(-12 15 58)"/>
+          <!-- Wing R -->
+          <ellipse cx="49" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(12 49 58)"/>
+          <!-- Eye socket L -->
+          <circle cx="21" cy="30" r="10" fill="#0d0d1c"/>
+          <!-- Eye socket R -->
+          <circle cx="43" cy="30" r="10" fill="#0d0d1c"/>
+          <!-- Iris L -->
+          <circle id="ollie-iris-l" cx="21" cy="30" r="7" fill="rgb(100,130,210)"/>
+          <!-- Iris R -->
+          <circle id="ollie-iris-r" cx="43" cy="30" r="7" fill="rgb(100,130,210)"/>
+          <!-- Pupil L -->
+          <circle id="ollie-pupil-l" cx="21" cy="30" r="4" fill="#08081a"/>
+          <!-- Pupil R -->
+          <circle id="ollie-pupil-r" cx="43" cy="30" r="4" fill="#08081a"/>
+          <!-- Shine L -->
+          <circle cx="23" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
+          <!-- Shine R -->
+          <circle cx="45" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
+          <!-- Beak -->
+          <path id="ollie-beak" d="M28 36 L32 43 L36 36Z" fill="#f5a623"/>
+          <!-- Cheek L (happy) -->
+          <circle id="ollie-cheek-l" cx="11" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
+          <!-- Cheek R (happy) -->
+          <circle id="ollie-cheek-r" cx="53" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
+          <!-- Tear (sad) -->
+          <ellipse id="ollie-tear" cx="21" cy="39" rx="1.5" ry="2.5" fill="rgb(100,170,255)" opacity="0"/>
+          <!-- Feet L -->
+          <path d="M24 74 L20 78 M24 74 L24 78 M24 74 L28 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <!-- Feet R -->
+          <path d="M40 74 L36 78 M40 74 L40 78 M40 74 L44 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
       </div>
-    </header>
+
+      <div id="pet-info">
+        <div class="pet-greeting" id="pet-greeting">Hi there!</div>
+        <div class="pet-mood-text" id="pet-mood-text">Ollie is waiting</div>
+        <div class="pet-mood-detail mini-hide" id="pet-mood-detail"></div>
+        <div class="streak-chip">
+          <span class="streak-num" id="streak-num">0</span>
+          <span>day streak</span>
+        </div>
+      </div>
+
+      <button id="feed-btn" disabled>Feed Ollie</button>
+    </div>
 
     <!-- Score -->
-    <section class="score-section">
-      <div class="score-ring-wrap">
-        <svg viewBox="0 0 80 80" class="score-ring" id="score-svg">
-          <circle cx="40" cy="40" r="34" class="ring-bg" />
-          <circle cx="40" cy="40" r="34" class="ring-fill" id="ring-fill" />
+    <div id="score-card">
+      <div id="score-ring-wrap">
+        <svg viewBox="0 0 68 68" width="68" height="68" id="score-svg">
+          <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+          <circle id="score-arc" cx="34" cy="34" r="28" fill="none"
+            stroke="rgb(100,130,210)" stroke-width="6"
+            stroke-dasharray="175.9" stroke-dashoffset="175.9"
+            stroke-linecap="round" transform="rotate(-90 34 34)"/>
         </svg>
-        <div class="score-inner">
-          <span class="score-num" id="score-num">—</span>
-          <span class="score-label">score</span>
+        <span id="score-num">0</span>
+      </div>
+      <div class="score-meta mini-hide">
+        <div class="score-label-text">Today's score</div>
+        <div class="score-grade" id="score-grade">—</div>
+        <div class="score-sub" id="score-sub"></div>
+        <div class="score-date" id="score-date"></div>
+      </div>
+    </div>
+
+    <!-- Progress bars -->
+    <div id="progress-card" class="mini-hide">
+      <div class="prog-row">
+        <div class="prog-header">
+          <span class="prog-label">Productive</span>
+          <span class="prog-val" id="prod-val">0m / 2h</span>
         </div>
+        <div class="prog-track"><div class="prog-fill accent" id="prod-bar"></div></div>
       </div>
-      <div class="score-meta">
-        <div class="greeting" id="greeting">Good morning</div>
-        <div class="date" id="today-date"></div>
-        <div class="sessions-count" id="sessions-label"></div>
-      </div>
-    </section>
-
-    <!-- Time Bars -->
-    <section class="time-section">
-      <div class="time-row">
-        <div class="time-label">
-          <span class="dot green"></span>
-          <span>Productive</span>
+      <div class="prog-row">
+        <div class="prog-header">
+          <span class="prog-label">Distractions</span>
+          <span class="prog-val" id="unprod-val">0m / 30m</span>
         </div>
-        <div class="time-bar-wrap">
-          <div class="time-bar green" id="productive-bar"></div>
-        </div>
-        <div class="time-value" id="productive-time">0m</div>
-        <div class="time-goal" id="productive-goal">/ 2h</div>
+        <div class="prog-track"><div class="prog-fill dim" id="unprod-bar"></div></div>
       </div>
-      <div class="time-row">
-        <div class="time-label">
-          <span class="dot red"></span>
-          <span>Unproductive</span>
-        </div>
-        <div class="time-bar-wrap">
-          <div class="time-bar red" id="unproductive-bar"></div>
-        </div>
-        <div class="time-value" id="unproductive-time">0m</div>
-        <div class="time-goal" id="unproductive-goal">/ 30m</div>
+      <div id="top-sites" class="large-only"></div>
+    </div>
+
+    <!-- Pomodoro timer -->
+    <div id="timer-card">
+      <div id="timer-header">
+        <span class="section-eyebrow">Study Timer</span>
+        <span id="session-count"></span>
       </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <!-- Pomodoro Timer -->
-    <section class="pomodoro-section">
-      <div class="section-title">
-        <span>🍅 Study Timer</span>
-        <span class="session-info" id="session-info">Session 1/4 · Work</span>
+      <div id="timer-display-row">
+        <span id="timer-time">--:--</span>
+        <span id="timer-mode-text" class="hidden"></span>
       </div>
-      <div class="timer-display" id="timer-display">25:00</div>
-      <div class="timer-controls" id="timer-controls-idle">
-        <button class="btn-icon btn-start" id="btn-start" title="Start Pomodoro">
-          ▶ Start Focus
-        </button>
+      <div id="timer-controls">
+        <button class="btn-secondary hi" id="pom-start">Start session</button>
+        <button class="btn-secondary hidden" id="pom-pause">Pause</button>
+        <button class="btn-secondary hidden" id="pom-resume">Resume</button>
+        <button class="btn-secondary hidden" id="pom-skip">Skip</button>
+        <button class="btn-ghost hidden" id="pom-stop">Stop</button>
       </div>
-      <div class="timer-controls hidden" id="timer-controls-active">
-        <button class="btn-icon btn-pause" id="btn-pause" title="Pause">⏸ Pause</button>
-        <button class="btn-icon btn-skip" id="btn-skip" title="Skip">⏭ Skip</button>
-        <button class="btn-icon btn-stop" id="btn-stop" title="Stop">■ Stop</button>
+    </div>
+
+    <!-- Focus mode row -->
+    <div id="focus-row">
+      <!-- Idle state -->
+      <div id="focus-idle" class="focus-info" style="flex:1">
+        <div class="focus-label">Focus Mode</div>
+        <div class="focus-sub">Hard-block all distracting sites</div>
       </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <!-- Focus Mode -->
-    <section class="focus-section">
-      <div class="focus-row" id="focus-idle-row">
-        <div>
-          <div class="section-title" style="margin-bottom:2px">🔒 Focus Mode</div>
-          <div class="focus-sub">Hard-block all distracting sites</div>
-        </div>
-        <div class="focus-duration-row">
-          <select id="focus-duration" class="duration-select">
-            <option value="15">15m</option>
-            <option value="30" selected>30m</option>
-            <option value="60">60m</option>
-            <option value="90">90m</option>
-            <option value="120">2h</option>
-          </select>
-          <button class="btn-focus-activate" id="btn-focus-activate">Activate</button>
-        </div>
+      <!-- Active state -->
+      <div id="focus-active" class="focus-info hidden" style="flex:1">
+        <div class="focus-active-label">Focus Mode · Active</div>
+        <div id="focus-remaining">--:-- remaining</div>
       </div>
-      <div class="focus-active-row hidden" id="focus-active-row">
-        <div>
-          <div class="focus-active-label">🔒 Focus Mode Active</div>
-          <div class="focus-remaining" id="focus-remaining">29:58 remaining</div>
-        </div>
-        <button class="btn-focus-cancel" id="btn-focus-cancel">Cancel</button>
+      <div class="focus-controls">
+        <select id="focus-duration" title="Duration">
+          <option value="15">15m</option>
+          <option value="30" selected>30m</option>
+          <option value="60">1h</option>
+          <option value="90">90m</option>
+          <option value="120">2h</option>
+        </select>
+        <button class="btn-secondary hi" id="btn-focus-activate">Activate</button>
+        <button class="btn-danger hidden" id="btn-focus-cancel">Cancel</button>
       </div>
-    </section>
+    </div>
 
-    <div class="divider"></div>
+    <!-- Footer actions -->
+    <div id="footer-row">
+      <button class="btn-ghost" id="btn-settings">Settings</button>
+      <button class="btn-ghost" id="btn-analytics">Analytics</button>
+    </div>
 
-    <!-- Quote -->
-    <section class="quote-section">
-      <p class="quote-text" id="quote-text"></p>
-      <p class="quote-author" id="quote-author"></p>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-      <button class="footer-btn" id="btn-options" title="Open settings">⚙ Settings</button>
-      <button class="footer-btn" id="btn-analytics" title="Open analytics">📊 Analytics</button>
-    </footer>
-
-    <script type="module" src="./popup.ts"></script>
-  </body>
+  </div><!-- /main -->
+</div><!-- /app -->
+<script type="module" src="./popup.ts"></script>
+</body>
 </html>

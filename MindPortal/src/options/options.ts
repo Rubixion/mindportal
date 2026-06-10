@@ -401,7 +401,7 @@ function setupActions() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `focusforge-export-${toDateString()}.json`;
+    a.download = `mindportal-export-${toDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   });

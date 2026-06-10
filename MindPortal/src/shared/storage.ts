@@ -1,5 +1,5 @@
-import type { AppStorage, Settings, DayRecord, StreakData, ActiveSession } from "./types";
-import { DEFAULT_SETTINGS, DEFAULT_STREAK, DEFAULT_SESSION } from "./defaults";
+import type { AppStorage, Settings, DayRecord, StreakData, ActiveSession, PetState } from "./types";
+import { DEFAULT_SETTINGS, DEFAULT_STREAK, DEFAULT_SESSION, DEFAULT_PET } from "./defaults";
 import { toDateString } from "./utils";
 
 /** Reads the full app storage, filling in defaults for missing keys. */
@@ -11,6 +11,7 @@ export async function getStorage(): Promise<AppStorage> {
     "session",
     "dismissedToday",
     "lastDismissedDate",
+    "pet",
   ]);
 
   return {
@@ -20,6 +21,7 @@ export async function getStorage(): Promise<AppStorage> {
     session: { ...DEFAULT_SESSION, ...(raw["session"] as Partial<ActiveSession> | undefined) },
     dismissedToday: (raw["dismissedToday"] as string[] | undefined) ?? [],
     lastDismissedDate: (raw["lastDismissedDate"] as string | undefined) ?? "",
+    pet: { ...DEFAULT_PET, ...(raw["pet"] as Partial<PetState> | undefined) },
   };
 }
 
@@ -75,6 +77,10 @@ export async function addDismissedSite(domain: string): Promise<void> {
   if (lastDate !== today) dismissed = [];
   if (!dismissed.includes(domain)) dismissed.push(domain);
   await chrome.storage.local.set({ dismissedToday: dismissed, lastDismissedDate: today });
+}
+
+export async function savePetState(pet: PetState): Promise<void> {
+  await chrome.storage.local.set({ pet });
 }
 
 export async function clearAllData(): Promise<void> {
