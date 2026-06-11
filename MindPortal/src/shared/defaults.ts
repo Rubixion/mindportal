@@ -47,6 +47,8 @@ export const DEFAULT_SETTINGS: Settings = {
   focusModeDefaultMinutes: 30,
   onboardingComplete: false,
   popupSize: "normal",
+  animationsEnabled: true,
+  languageGoal: "",
 };
 
 export const DEFAULT_PET: PetState = {
@@ -70,4 +72,5 @@ export const DEFAULT_SESSION: ActiveSession = {
   lastBreakTime: Date.now(),
   currentDomain: null,
   domainStartTime: null,
+  intention: "",
 };

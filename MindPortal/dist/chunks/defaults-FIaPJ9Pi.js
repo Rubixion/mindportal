@@ -44,7 +44,9 @@ const DEFAULT_SETTINGS = {
   breakReminderMinutes: 50,
   focusModeDefaultMinutes: 30,
   onboardingComplete: false,
-  popupSize: "normal"
+  popupSize: "normal",
+  animationsEnabled: true,
+  languageGoal: ""
 };
 const DEFAULT_PET = {
   lastFedDate: "",
@@ -64,7 +66,8 @@ const DEFAULT_SESSION = {
   focusModeEndTime: null,
   lastBreakTime: Date.now(),
   currentDomain: null,
-  domainStartTime: null
+  domainStartTime: null,
+  intention: ""
 };
 export {
   DEFAULT_PET as D,

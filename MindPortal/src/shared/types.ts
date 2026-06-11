@@ -1,5 +1,13 @@
 export type PopupSize = "mini" | "normal" | "large";
 
+export type OllieMood = "happy" | "hungry" | "sad" | "focused" | "sleepy" | "worried" | "proud";
+
+export interface IntentionRecord {
+  text: string;
+  date: string;      // YYYY-MM-DD
+  startTime: number; // unix ms
+}
+
 export interface Settings {
   userName: string;
   productiveSites: string[];
@@ -17,19 +25,21 @@ export interface Settings {
   focusModeDefaultMinutes: number;
   onboardingComplete: boolean;
   popupSize: PopupSize;
+  animationsEnabled: boolean;
+  languageGoal: string;
 }
 
 export interface PetState {
-  lastFedDate: string;   // YYYY-MM-DD, empty = never fed
+  lastFedDate: string;
   totalFeedCount: number;
 }
 
 export interface DayRecord {
-  date: string; // YYYY-MM-DD
+  date: string;
   productiveSeconds: number;
   unproductiveSeconds: number;
   neutralSeconds: number;
-  siteBreakdown: Record<string, number>; // domain → seconds
+  siteBreakdown: Record<string, number>;
   pomodoroSessionsCompleted: number;
   goalMet: boolean;
   score: number;
@@ -38,19 +48,20 @@ export interface DayRecord {
 export interface StreakData {
   current: number;
   longest: number;
-  lastProductiveDate: string; // YYYY-MM-DD
+  lastProductiveDate: string;
 }
 
 export interface ActiveSession {
   pomodoroActive: boolean;
-  pomodoroEndTime: number | null; // unix ms
+  pomodoroEndTime: number | null;
   pomodoroIsBreak: boolean;
-  pomodoroSessionCount: number; // sessions since last long break
+  pomodoroSessionCount: number;
   focusModeActive: boolean;
-  focusModeEndTime: number | null; // unix ms
-  lastBreakTime: number; // unix ms — for break reminders
+  focusModeEndTime: number | null;
+  lastBreakTime: number;
   currentDomain: string | null;
-  domainStartTime: number | null; // unix ms
+  domainStartTime: number | null;
+  intention: string;
 }
 
 export interface AppStorage {
@@ -61,6 +72,10 @@ export interface AppStorage {
   dismissedToday: string[];
   lastDismissedDate: string;
   pet: PetState;
+  xp: number;
+  level: number;
+  intentionHistory: IntentionRecord[];
+  delayQueue: string[];
 }
 
 export type SiteCategory = "productive" | "unproductive" | "neutral";

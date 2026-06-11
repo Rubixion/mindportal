@@ -1,5 +1,5 @@
 import { _ as __vitePreload } from "../chunks/preload-helper-BkSzTOHT.js";
-import { D as DEFAULT_PET, a as DEFAULT_SESSION, b as DEFAULT_STREAK, c as DEFAULT_SETTINGS } from "../chunks/defaults-CSo6VrWZ.js";
+import { D as DEFAULT_PET, a as DEFAULT_SESSION, b as DEFAULT_STREAK, c as DEFAULT_SETTINGS } from "../chunks/defaults-FIaPJ9Pi.js";
 import { t as toDateString, a as areConsecutiveDays, c as categorizeDomain, b as computeScore, e as extractDomain } from "../chunks/utils-DXHU2JcO.js";
 async function getStorage() {
   const raw = await chrome.storage.local.get([
@@ -9,7 +9,11 @@ async function getStorage() {
     "session",
     "dismissedToday",
     "lastDismissedDate",
-    "pet"
+    "pet",
+    "xp",
+    "level",
+    "intentionHistory",
+    "delayQueue"
   ]);
   return {
     settings: { ...DEFAULT_SETTINGS, ...raw["settings"] },
@@ -18,7 +22,11 @@ async function getStorage() {
     session: { ...DEFAULT_SESSION, ...raw["session"] },
     dismissedToday: raw["dismissedToday"] ?? [],
     lastDismissedDate: raw["lastDismissedDate"] ?? "",
-    pet: { ...DEFAULT_PET, ...raw["pet"] }
+    pet: { ...DEFAULT_PET, ...raw["pet"] },
+    xp: raw["xp"] ?? 0,
+    level: raw["level"] ?? 1,
+    intentionHistory: raw["intentionHistory"] ?? [],
+    delayQueue: raw["delayQueue"] ?? []
   };
 }
 async function saveSettings(settings) {
@@ -69,9 +77,40 @@ async function addDismissedSite(domain) {
 async function savePetState(pet) {
   await chrome.storage.local.set({ pet });
 }
+async function awardXP(amount) {
+  const raw = await chrome.storage.local.get(["xp", "level"]);
+  const currentXP = (raw["xp"] ?? 0) + amount;
+  const currentLevel = raw["level"] ?? 1;
+  const xpForNextLevel = currentLevel * 100;
+  const leveledUp = currentXP >= xpForNextLevel;
+  const newLevel = leveledUp ? currentLevel + 1 : currentLevel;
+  const newXP = leveledUp ? currentXP - xpForNextLevel : currentXP;
+  await chrome.storage.local.set({ xp: newXP, level: newLevel });
+  return { xp: newXP, level: newLevel, leveledUp };
+}
+async function addIntentionRecord(record) {
+  const raw = await chrome.storage.local.get("intentionHistory");
+  const history = raw["intentionHistory"] ?? [];
+  history.unshift(record);
+  if (history.length > 50) history.splice(50);
+  await chrome.storage.local.set({ intentionHistory: history });
+}
+async function addToDelayQueue(domain) {
+  const raw = await chrome.storage.local.get("delayQueue");
+  const queue = raw["delayQueue"] ?? [];
+  if (!queue.includes(domain)) queue.push(domain);
+  await chrome.storage.local.set({ delayQueue: queue });
+}
+async function clearDelayQueue() {
+  await chrome.storage.local.set({ delayQueue: [] });
+}
 const storage = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   addDismissedSite,
+  addIntentionRecord,
+  addToDelayQueue,
+  awardXP,
+  clearDelayQueue,
   getStorage,
   getTodayRecord,
   saveDayRecord,
@@ -165,7 +204,7 @@ async function updateBadge(score) {
     const s = remaining % 60;
     const label = m > 0 ? `${m}m` : `${s}s`;
     await chrome.action.setBadgeText({ text: label });
-    await chrome.action.setBadgeBackgroundColor({ color: session.pomodoroIsBreak ? "#4ade80" : "#6c63ff" });
+    await chrome.action.setBadgeBackgroundColor({ color: session.pomodoroIsBreak ? "#4ade80" : "#6982d8" });
   } else if (session.focusModeActive) {
     await chrome.action.setBadgeText({ text: "🔒" });
     await chrome.action.setBadgeBackgroundColor({ color: "#f87171" });
@@ -287,6 +326,7 @@ async function handlePomodoroEnd() {
     const breakMinutes = isLongBreak ? settings.pomodoroLongBreakMinutes : settings.pomodoroShortBreakMinutes;
     record.pomodoroSessionsCompleted += 1;
     await saveDayRecord(record);
+    await awardXP(25);
     chrome.notifications.create("pomodoro_break_start", {
       type: "basic",
       iconUrl: chrome.runtime.getURL("assets/icons/icon48.png"),
@@ -317,7 +357,8 @@ async function handleMessage(message) {
   const { type } = message;
   if (type === "START_POMODORO") {
     const { session, settings } = await getStorage();
-    const workMs = settings.pomodoroWorkMinutes * 60 * 1e3;
+    const minutes = message["minutes"] ?? settings.pomodoroWorkMinutes;
+    const workMs = minutes * 60 * 1e3;
     const endTime = Date.now() + workMs;
     await chrome.alarms.clear(ALARM_POMODORO);
     chrome.alarms.create(ALARM_POMODORO, { when: endTime });
@@ -355,10 +396,18 @@ async function handleMessage(message) {
   if (type === "ACTIVATE_FOCUS_MODE") {
     const { session, settings } = await getStorage();
     const minutes = message["minutes"] ?? settings.focusModeDefaultMinutes;
+    const intention = message["intention"] ?? "";
     const endTime = Date.now() + minutes * 60 * 1e3;
     await chrome.alarms.clear(ALARM_FOCUS_MODE);
     chrome.alarms.create(ALARM_FOCUS_MODE, { when: endTime });
-    await saveSession({ ...session, focusModeActive: true, focusModeEndTime: endTime });
+    await saveSession({ ...session, focusModeActive: true, focusModeEndTime: endTime, intention });
+    if (intention) {
+      await addIntentionRecord({
+        text: intention,
+        date: toDateString(),
+        startTime: Date.now()
+      });
+    }
     return { ok: true };
   }
   if (type === "DEACTIVATE_FOCUS_MODE") {
@@ -396,6 +445,7 @@ async function handleMessage(message) {
       totalFeedCount: storage2.pet.totalFeedCount + 1
     };
     await savePetState(newPet);
+    await awardXP(10);
     return { ok: true, pet: newPet };
   }
   if (type === "SAVE_SETTINGS") {
@@ -406,16 +456,46 @@ async function handleMessage(message) {
     await saveSettings2(message["settings"]);
     return { ok: true };
   }
+  if (type === "AWARD_XP") {
+    const amount = message["amount"] ?? 5;
+    const result = await awardXP(amount);
+    return { ok: true, ...result };
+  }
+  if (type === "SET_INTENTION") {
+    const { session } = await getStorage();
+    const intention = message["intention"] ?? "";
+    await saveSession({ ...session, intention });
+    return { ok: true };
+  }
+  if (type === "ADD_DELAY_QUEUE") {
+    const domain = message["domain"];
+    await addToDelayQueue(domain);
+    return { ok: true };
+  }
+  if (type === "CLEAR_DELAY_QUEUE") {
+    await clearDelayQueue();
+    return { ok: true };
+  }
   return { error: "Unknown message type" };
 }
 async function deactivateFocusMode() {
-  const { session } = await getStorage();
+  const { session, delayQueue } = await getStorage();
   await chrome.alarms.clear(ALARM_FOCUS_MODE);
-  await saveSession({ ...session, focusModeActive: false, focusModeEndTime: null });
+  await saveSession({ ...session, focusModeActive: false, focusModeEndTime: null, intention: "" });
+  if (session.focusModeEndTime) {
+    session.focusModeEndTime - (session.focusModeEndTime - (session.focusModeActive ? 0 : 0));
+    await awardXP(20);
+  }
+  if (delayQueue.length > 0) {
+    for (const domain of delayQueue) {
+      await chrome.tabs.create({ url: `https://${domain}`, active: false });
+    }
+    await clearDelayQueue();
+  }
   chrome.notifications.create("focus_mode_end", {
     type: "basic",
     iconUrl: chrome.runtime.getURL("assets/icons/icon48.png"),
-    title: "Focus Mode ended",
-    message: "You're back. Distracting sites are unblocked."
+    title: "Focus session complete.",
+    message: session.intention ? `You were working on: ${session.intention}` : "Nice work. Distracting sites are unblocked."
   });
 }

@@ -5,6 +5,10 @@ import {
   saveDayRecord,
   getTodayRecord,
   savePetState,
+  awardXP,
+  addIntentionRecord,
+  addToDelayQueue,
+  clearDelayQueue,
 } from "../shared/storage";
 import {
   toDateString,
@@ -129,7 +133,7 @@ async function updateBadge(score: number) {
     const s = remaining % 60;
     const label = m > 0 ? `${m}m` : `${s}s`;
     await chrome.action.setBadgeText({ text: label });
-    await chrome.action.setBadgeBackgroundColor({ color: session.pomodoroIsBreak ? "#4ade80" : "#6c63ff" });
+    await chrome.action.setBadgeBackgroundColor({ color: session.pomodoroIsBreak ? "#4ade80" : "#6982d8" });
   } else if (session.focusModeActive) {
     await chrome.action.setBadgeText({ text: "🔒" });
     await chrome.action.setBadgeBackgroundColor({ color: "#f87171" });
@@ -156,7 +160,6 @@ async function checkBreakReminder(
       title: "Time for a break!",
       message: `You've been focused for ${Math.round(elapsed)} minutes. Step away for a few minutes.`,
     });
-    // Reset break timer
     const updatedSession: ActiveSession = { ...session, lastBreakTime: now };
     await saveSession(updatedSession);
   }
@@ -182,7 +185,6 @@ chrome.tabs.onUpdated.addListener(async (_tabId, changeInfo) => {
 });
 chrome.windows.onFocusChanged.addListener(async (windowId) => {
   if (windowId === chrome.windows.WINDOW_ID_NONE) {
-    // Window lost focus — flush but don't start new tracking
     const now = Date.now();
     await flushCurrentDomain(now);
     trackingDomain = null;
@@ -199,7 +201,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
   if (alarm.name === ALARM_TICK) {
     await flushCurrentDomain(now);
-    // Reset tracking start after flush
     if (trackingDomain) trackingStart = now;
     await updateBadge(0);
   }
@@ -241,7 +242,6 @@ async function checkMidnightReset() {
       settings.gracePeriodEnabled &&
       areConsecutiveDays(streak.lastProductiveDate, toDateString(new Date(Date.now() - 172_800_000)))
     ) {
-      // Grace period: allow one skipped day
       newStreak.current = streak.current + 1;
     } else {
       newStreak.current = 1;
@@ -249,7 +249,6 @@ async function checkMidnightReset() {
     newStreak.lastProductiveDate = yesterday;
     newStreak.longest = Math.max(newStreak.current, streak.longest);
   } else {
-    // Check grace period
     if (!settings.gracePeriodEnabled || streak.current === 0) {
       newStreak.current = 0;
     }
@@ -257,7 +256,6 @@ async function checkMidnightReset() {
 
   await saveStreak(newStreak);
 
-  // Pre-create today's record
   if (!dailyData[today]) {
     await saveDayRecord({
       date: today,
@@ -279,7 +277,6 @@ async function handlePomodoroEnd() {
   const record = await getTodayRecord(settings);
 
   if (session.pomodoroIsBreak) {
-    // Break ended — notify and start next work session
     chrome.notifications.create("pomodoro_work_start", {
       type: "basic",
       iconUrl: chrome.runtime.getURL("assets/icons/icon48.png"),
@@ -289,16 +286,17 @@ async function handlePomodoroEnd() {
     const updatedSession: ActiveSession = { ...session, pomodoroActive: false, pomodoroEndTime: null };
     await saveSession(updatedSession);
   } else {
-    // Work session ended — increment count, start break
     const newSessionCount = session.pomodoroSessionCount + 1;
     const isLongBreak = newSessionCount % 4 === 0;
     const breakMinutes = isLongBreak
       ? settings.pomodoroLongBreakMinutes
       : settings.pomodoroShortBreakMinutes;
 
-    // Update day record
     record.pomodoroSessionsCompleted += 1;
     await saveDayRecord(record);
+
+    // Award XP for completing a pomodoro
+    await awardXP(25);
 
     chrome.notifications.create("pomodoro_break_start", {
       type: "basic",
@@ -336,7 +334,8 @@ async function handleMessage(message: Record<string, unknown>): Promise<unknown>
 
   if (type === "START_POMODORO") {
     const { session, settings } = await getStorage();
-    const workMs = settings.pomodoroWorkMinutes * 60 * 1000;
+    const minutes = (message["minutes"] as number | undefined) ?? settings.pomodoroWorkMinutes;
+    const workMs = minutes * 60 * 1000;
     const endTime = Date.now() + workMs;
     await chrome.alarms.clear(ALARM_POMODORO);
     chrome.alarms.create(ALARM_POMODORO, { when: endTime });
@@ -378,10 +377,18 @@ async function handleMessage(message: Record<string, unknown>): Promise<unknown>
   if (type === "ACTIVATE_FOCUS_MODE") {
     const { session, settings } = await getStorage();
     const minutes = (message["minutes"] as number | undefined) ?? settings.focusModeDefaultMinutes;
+    const intention = (message["intention"] as string | undefined) ?? "";
     const endTime = Date.now() + minutes * 60 * 1000;
     await chrome.alarms.clear(ALARM_FOCUS_MODE);
     chrome.alarms.create(ALARM_FOCUS_MODE, { when: endTime });
-    await saveSession({ ...session, focusModeActive: true, focusModeEndTime: endTime });
+    await saveSession({ ...session, focusModeActive: true, focusModeEndTime: endTime, intention });
+    if (intention) {
+      await addIntentionRecord({
+        text: intention,
+        date: toDateString(),
+        startTime: Date.now(),
+      });
+    }
     return { ok: true };
   }
 
@@ -423,6 +430,7 @@ async function handleMessage(message: Record<string, unknown>): Promise<unknown>
       totalFeedCount: storage.pet.totalFeedCount + 1,
     };
     await savePetState(newPet);
+    await awardXP(10);
     return { ok: true, pet: newPet };
   }
 
@@ -432,17 +440,59 @@ async function handleMessage(message: Record<string, unknown>): Promise<unknown>
     return { ok: true };
   }
 
+  if (type === "AWARD_XP") {
+    const amount = (message["amount"] as number | undefined) ?? 5;
+    const result = await awardXP(amount);
+    return { ok: true, ...result };
+  }
+
+  if (type === "SET_INTENTION") {
+    const { session } = await getStorage();
+    const intention = (message["intention"] as string | undefined) ?? "";
+    await saveSession({ ...session, intention });
+    return { ok: true };
+  }
+
+  if (type === "ADD_DELAY_QUEUE") {
+    const domain = message["domain"] as string;
+    await addToDelayQueue(domain);
+    return { ok: true };
+  }
+
+  if (type === "CLEAR_DELAY_QUEUE") {
+    await clearDelayQueue();
+    return { ok: true };
+  }
+
   return { error: "Unknown message type" };
 }
 
 async function deactivateFocusMode() {
-  const { session } = await getStorage();
+  const { session, delayQueue } = await getStorage();
   await chrome.alarms.clear(ALARM_FOCUS_MODE);
-  await saveSession({ ...session, focusModeActive: false, focusModeEndTime: null });
+  await saveSession({ ...session, focusModeActive: false, focusModeEndTime: null, intention: "" });
+
+  // Award XP for completing a focus session
+  if (session.focusModeEndTime) {
+    const plannedMs = session.focusModeEndTime - (session.focusModeEndTime - (session.focusModeActive ? 0 : 0));
+    void plannedMs; // elapsed XP calculation handled separately
+    await awardXP(20);
+  }
+
+  // Open any queued sites the user flagged during focus
+  if (delayQueue.length > 0) {
+    for (const domain of delayQueue) {
+      await chrome.tabs.create({ url: `https://${domain}`, active: false });
+    }
+    await clearDelayQueue();
+  }
+
   chrome.notifications.create("focus_mode_end", {
     type: "basic",
     iconUrl: chrome.runtime.getURL("assets/icons/icon48.png"),
-    title: "Focus Mode ended",
-    message: "You're back. Distracting sites are unblocked.",
+    title: "Focus session complete.",
+    message: session.intention
+      ? `You were working on: ${session.intention}`
+      : "Nice work. Distracting sites are unblocked.",
   });
 }

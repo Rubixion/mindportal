@@ -1,6 +1,6 @@
 import "../chunks/modulepreload-polyfill-DaKOjhqt.js";
 import { t as toDateString, b as computeScore, f as formatDuration, e as extractDomain } from "../chunks/utils-DXHU2JcO.js";
-import { c as DEFAULT_SETTINGS } from "../chunks/defaults-CSo6VrWZ.js";
+import { c as DEFAULT_SETTINGS } from "../chunks/defaults-FIaPJ9Pi.js";
 let storage = null;
 let editableProductiveSites = [];
 let editableUnproductiveSites = [];

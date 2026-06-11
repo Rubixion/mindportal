@@ -1,4 +1,4 @@
-import type { AppStorage, Settings, DayRecord, StreakData, ActiveSession, PetState } from "./types";
+import type { AppStorage, Settings, DayRecord, StreakData, ActiveSession, PetState, IntentionRecord } from "./types";
 import { DEFAULT_SETTINGS, DEFAULT_STREAK, DEFAULT_SESSION, DEFAULT_PET } from "./defaults";
 import { toDateString } from "./utils";
 
@@ -12,6 +12,10 @@ export async function getStorage(): Promise<AppStorage> {
     "dismissedToday",
     "lastDismissedDate",
     "pet",
+    "xp",
+    "level",
+    "intentionHistory",
+    "delayQueue",
   ]);
 
   return {
@@ -22,6 +26,10 @@ export async function getStorage(): Promise<AppStorage> {
     dismissedToday: (raw["dismissedToday"] as string[] | undefined) ?? [],
     lastDismissedDate: (raw["lastDismissedDate"] as string | undefined) ?? "",
     pet: { ...DEFAULT_PET, ...(raw["pet"] as Partial<PetState> | undefined) },
+    xp: (raw["xp"] as number | undefined) ?? 0,
+    level: (raw["level"] as number | undefined) ?? 1,
+    intentionHistory: (raw["intentionHistory"] as IntentionRecord[] | undefined) ?? [],
+    delayQueue: (raw["delayQueue"] as string[] | undefined) ?? [],
   };
 }
 
@@ -41,7 +49,6 @@ export async function saveDayRecord(record: DayRecord): Promise<void> {
   const { dailyData } = await chrome.storage.local.get("dailyData");
   const existing = (dailyData as Record<string, DayRecord> | undefined) ?? {};
   existing[record.date] = record;
-  // Keep only last 90 days of data
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 90);
   const cutoffStr = toDateString(cutoff);
@@ -81,6 +88,37 @@ export async function addDismissedSite(domain: string): Promise<void> {
 
 export async function savePetState(pet: PetState): Promise<void> {
   await chrome.storage.local.set({ pet });
+}
+
+export async function awardXP(amount: number): Promise<{ xp: number; level: number; leveledUp: boolean }> {
+  const raw = await chrome.storage.local.get(["xp", "level"]);
+  const currentXP = ((raw["xp"] as number | undefined) ?? 0) + amount;
+  const currentLevel = (raw["level"] as number | undefined) ?? 1;
+  const xpForNextLevel = currentLevel * 100;
+  const leveledUp = currentXP >= xpForNextLevel;
+  const newLevel = leveledUp ? currentLevel + 1 : currentLevel;
+  const newXP = leveledUp ? currentXP - xpForNextLevel : currentXP;
+  await chrome.storage.local.set({ xp: newXP, level: newLevel });
+  return { xp: newXP, level: newLevel, leveledUp };
+}
+
+export async function addIntentionRecord(record: IntentionRecord): Promise<void> {
+  const raw = await chrome.storage.local.get("intentionHistory");
+  const history = (raw["intentionHistory"] as IntentionRecord[] | undefined) ?? [];
+  history.unshift(record);
+  if (history.length > 50) history.splice(50);
+  await chrome.storage.local.set({ intentionHistory: history });
+}
+
+export async function addToDelayQueue(domain: string): Promise<void> {
+  const raw = await chrome.storage.local.get("delayQueue");
+  const queue = (raw["delayQueue"] as string[] | undefined) ?? [];
+  if (!queue.includes(domain)) queue.push(domain);
+  await chrome.storage.local.set({ delayQueue: queue });
+}
+
+export async function clearDelayQueue(): Promise<void> {
+  await chrome.storage.local.set({ delayQueue: [] });
 }
 
 export async function clearAllData(): Promise<void> {

@@ -1,458 +1,602 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>MindPortal</title>
-  <link rel="stylesheet" href="./popup.css" />
-</head>
-<body class="size-normal">
-<div id="app">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindPortal</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <!-- ─── Onboarding overlay ──────────────────────────────────────────────── -->
+    <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-label="Welcome to MindPortal">
+      <!-- Step 1: Welcome -->
+      <div class="ob-step" id="ob-step-1">
+        <div class="ob-ollie">
+          <svg viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="50" cy="97" rx="18" ry="14" fill="#171740"/>
+            <ellipse cx="31" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(-12 31 93)"/>
+            <ellipse cx="69" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(12 69 93)"/>
+            <circle cx="50" cy="54" r="28" fill="#1a1a42"/>
+            <polygon points="27,37 17,8 38,28" fill="#1a1a42"/>
+            <polygon points="73,37 83,8 62,28" fill="#1a1a42"/>
+            <ellipse cx="50" cy="56" rx="20" ry="18" fill="#20205a"/>
+            <circle cx="38" cy="51" r="10" fill="#fff"/>
+            <circle cx="62" cy="51" r="10" fill="#fff"/>
+            <circle cx="38" cy="51" r="6" fill="#6982d8"/>
+            <circle cx="62" cy="51" r="6" fill="#6982d8"/>
+            <circle cx="38" cy="51" r="3" fill="#05050f"/>
+            <circle cx="62" cy="51" r="3" fill="#05050f"/>
+            <circle cx="40" cy="49" r="1.5" fill="#fff"/>
+            <circle cx="64" cy="49" r="1.5" fill="#fff"/>
+            <path d="M46 62 L50 69 L54 62 Q50 60 46 62 Z" fill="#f5a623"/>
+            <path d="M44 72 Q50 76 56 72" stroke="#6982d8" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <ellipse cx="50" cy="91" rx="12" ry="8" fill="#20205a"/>
+          </svg>
+        </div>
+        <h2 class="ob-title">Hey there. I'm Ollie.</h2>
+        <p class="ob-body">I'm here to help you focus. No guilt, no shame. What's your name?</p>
+        <input id="ob-name-input" class="ob-input" type="text" placeholder="Your first name" maxlength="30" autocomplete="off" />
+        <button id="ob-step1-next" class="ob-btn-primary">Let's go</button>
+      </div>
 
-  <!-- ── Header ───────────────────────────────────────────────────────── -->
-  <header id="header">
-    <div class="brand">
-      <div class="brand-dot">M</div>
-      MindPortal
-    </div>
-    <div class="header-right">
-      <button id="btn-open-page" class="btn-icon" title="Open full page">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M7 1h4v4M11 1L6 6M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-        </svg>
-      </button>
-      <div class="size-btns">
-        <button class="sz-btn" data-size="mini"   title="Compact">S</button>
-        <button class="sz-btn active" data-size="normal" title="Normal">M</button>
-        <button class="sz-btn" data-size="large"  title="Expanded">L</button>
+      <!-- Step 2: Distraction sites -->
+      <div class="ob-step" id="ob-step-2" hidden>
+        <div class="ob-progress" aria-label="Step 2 of 5">
+          <span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-active"></span><span class="ob-pip"></span><span class="ob-pip"></span><span class="ob-pip"></span>
+        </div>
+        <h2 class="ob-title">What pulls you off track?</h2>
+        <p class="ob-body">Pick the sites that tend to swallow your time. You can change these later.</p>
+        <div class="ob-site-grid" id="ob-distraction-grid">
+          <button class="ob-site-chip" data-site="youtube.com">YouTube</button>
+          <button class="ob-site-chip" data-site="reddit.com">Reddit</button>
+          <button class="ob-site-chip" data-site="twitter.com">X / Twitter</button>
+          <button class="ob-site-chip" data-site="instagram.com">Instagram</button>
+          <button class="ob-site-chip" data-site="tiktok.com">TikTok</button>
+          <button class="ob-site-chip" data-site="facebook.com">Facebook</button>
+          <button class="ob-site-chip" data-site="netflix.com">Netflix</button>
+          <button class="ob-site-chip" data-site="twitch.tv">Twitch</button>
+          <button class="ob-site-chip" data-site="9gag.com">9GAG</button>
+        </div>
+        <div class="ob-row">
+          <button id="ob-step2-back" class="ob-btn-ghost">Back</button>
+          <button id="ob-step2-next" class="ob-btn-primary">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Daily goal -->
+      <div class="ob-step" id="ob-step-3" hidden>
+        <div class="ob-progress" aria-label="Step 3 of 5">
+          <span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-active"></span><span class="ob-pip"></span><span class="ob-pip"></span>
+        </div>
+        <h2 class="ob-title">How much focus time feels right?</h2>
+        <p class="ob-body">Start conservative. You can raise it once you're in the habit.</p>
+        <div class="ob-goal-cards">
+          <button class="ob-goal-card" data-minutes="60">
+            <span class="ob-goal-name">Light</span>
+            <span class="ob-goal-time">1 hour / day</span>
+          </button>
+          <button class="ob-goal-card ob-goal-selected" data-minutes="120">
+            <span class="ob-goal-name">Standard</span>
+            <span class="ob-goal-time">2 hours / day</span>
+          </button>
+          <button class="ob-goal-card" data-minutes="240">
+            <span class="ob-goal-name">Deep Work</span>
+            <span class="ob-goal-time">4 hours / day</span>
+          </button>
+        </div>
+        <div class="ob-row">
+          <button id="ob-step3-back" class="ob-btn-ghost">Back</button>
+          <button id="ob-step3-next" class="ob-btn-primary">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Warning style -->
+      <div class="ob-step" id="ob-step-4" hidden>
+        <div class="ob-progress" aria-label="Step 4 of 5">
+          <span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-active"></span><span class="ob-pip"></span>
+        </div>
+        <h2 class="ob-title">How should I remind you?</h2>
+        <p class="ob-body">When you open a distracting site, what happens?</p>
+        <div class="ob-warn-cards">
+          <button class="ob-warn-card ob-warn-selected" data-mode="countdown">
+            <strong>Soft pause</strong>
+            <span>A 5-second countdown, then you can continue</span>
+          </button>
+          <button class="ob-warn-card" data-mode="warn">
+            <strong>Gentle nudge</strong>
+            <span>A small reminder, no countdown</span>
+          </button>
+          <button class="ob-warn-card" data-mode="block">
+            <strong>Hard block</strong>
+            <span>During Focus Mode, the site is locked</span>
+          </button>
+        </div>
+        <div class="ob-row">
+          <button id="ob-step4-back" class="ob-btn-ghost">Back</button>
+          <button id="ob-step4-next" class="ob-btn-primary">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 5: All set -->
+      <div class="ob-step" id="ob-step-5" hidden>
+        <div class="ob-progress" aria-label="Step 5 of 5">
+          <span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-done"></span><span class="ob-pip ob-pip-active"></span>
+        </div>
+        <div class="ob-ollie ob-ollie-proud">
+          <svg viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="50" cy="97" rx="18" ry="14" fill="#171740"/>
+            <ellipse cx="31" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(-12 31 93)"/>
+            <ellipse cx="69" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(12 69 93)"/>
+            <circle cx="50" cy="54" r="28" fill="#1a1a42"/>
+            <polygon points="27,37 17,8 38,28" fill="#1a1a42"/>
+            <polygon points="73,37 83,8 62,28" fill="#1a1a42"/>
+            <ellipse cx="50" cy="56" rx="20" ry="18" fill="#20205a"/>
+            <circle cx="38" cy="51" r="10" fill="#fff"/>
+            <circle cx="62" cy="51" r="10" fill="#fff"/>
+            <circle cx="38" cy="51" r="6" fill="#34d399"/>
+            <circle cx="62" cy="51" r="6" fill="#34d399"/>
+            <circle cx="38" cy="51" r="3" fill="#05050f"/>
+            <circle cx="62" cy="51" r="3" fill="#05050f"/>
+            <circle cx="40" cy="49" r="1.5" fill="#fff"/>
+            <circle cx="64" cy="49" r="1.5" fill="#fff"/>
+            <path d="M46 62 L50 69 L54 62 Q50 60 46 62 Z" fill="#f5a623"/>
+            <path d="M43 71 Q50 78 57 71" stroke="#34d399" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <ellipse cx="50" cy="91" rx="12" ry="8" fill="#20205a"/>
+          </svg>
+        </div>
+        <h2 class="ob-title" id="ob-final-title">You're all set.</h2>
+        <p class="ob-body" id="ob-final-body">I'll be right here whenever you need a nudge. Let's build something good together.</p>
+        <button id="ob-finish" class="ob-btn-primary">Open MindPortal</button>
       </div>
     </div>
-  </header>
 
-  <!-- ── Onboarding ────────────────────────────────────────────────────── -->
-  <div id="onboarding" class="hidden">
-
-    <div id="ob-0" class="ob-step">
-      <div id="ob-ollie-wrap"></div>
-      <p class="ob-eyebrow">Your focus companion</p>
-      <h2 class="ob-title">Meet Ollie.</h2>
-      <p class="ob-body">Feed Ollie every day by hitting your focus goals. Miss a day and Ollie gets hungry.</p>
-      <button class="btn-primary" id="ob-next-0">Let's go</button>
-    </div>
-
-    <div id="ob-1" class="ob-step hidden">
-      <div id="ob-ollie-wrap-1"></div>
-      <p class="ob-eyebrow">Setup 1 of 2</p>
-      <h2 class="ob-title">What's your name?</h2>
-      <input class="ob-input" id="ob-name" type="text" placeholder="Your first name" maxlength="20" autocomplete="off" />
-      <button class="btn-primary" id="ob-next-1">Continue</button>
-    </div>
-
-    <div id="ob-2" class="ob-step hidden">
-      <p class="ob-eyebrow">Setup 2 of 2</p>
-      <h2 class="ob-title">Daily focus goal</h2>
-      <p class="ob-body">How much productive browser time do you want each day?</p>
-      <div class="goal-grid" id="goal-grid">
-        <button class="goal-opt" data-val="60">1 hour</button>
-        <button class="goal-opt" data-val="90">1.5 hours</button>
-        <button class="goal-opt active" data-val="120">2 hours</button>
-        <button class="goal-opt" data-val="180">3 hours</button>
-      </div>
-      <button class="btn-primary" id="ob-finish">Start tracking</button>
-    </div>
-
-  </div>
-
-  <!-- ── App shell (post-onboarding) ──────────────────────────────────── -->
-  <div id="app-shell" class="hidden">
-
-    <!-- Tab navigation -->
-    <nav id="tab-nav">
-      <button class="tab-btn active" data-tab="home">Home</button>
-      <button class="tab-btn" data-tab="analytics">Analytics</button>
-      <button class="tab-btn" data-tab="sites">Sites</button>
-      <button class="tab-btn" data-tab="goals">Goals</button>
-      <button class="tab-btn" data-tab="notes">Notes</button>
-      <button class="tab-btn" data-tab="language">Language</button>
-      <button class="tab-btn" data-tab="profile">Profile</button>
-    </nav>
-
-    <!-- Scrollable content area -->
-    <div id="tab-content">
-
-      <!-- ── Home panel ─────────────────────────────────────────────── -->
-      <div class="tab-panel active" id="panel-home">
-
-        <!-- Pet row -->
-        <div id="pet-row">
-          <div id="ollie-wrap" class="ollie-hungry">
-            <svg id="ollie-svg" viewBox="0 0 64 78" xmlns="http://www.w3.org/2000/svg" width="60" height="73">
-              <path d="M15 19 L10 5 L22 15Z" fill="#191929"/>
-              <path d="M49 19 L54 5 L42 15Z" fill="#191929"/>
-              <circle cx="32" cy="31" r="21" fill="#191929"/>
-              <ellipse cx="32" cy="59" rx="17" ry="17" fill="#191929"/>
-              <ellipse cx="32" cy="61" rx="10" ry="11" fill="#20203a"/>
-              <ellipse cx="15" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(-12 15 58)"/>
-              <ellipse cx="49" cy="58" rx="8" ry="12" fill="#121220" transform="rotate(12 49 58)"/>
-              <circle cx="21" cy="30" r="10" fill="#0d0d1c"/>
-              <circle cx="43" cy="30" r="10" fill="#0d0d1c"/>
-              <circle id="ollie-iris-l" cx="21" cy="30" r="7" fill="rgb(100,130,210)"/>
-              <circle id="ollie-iris-r" cx="43" cy="30" r="7" fill="rgb(100,130,210)"/>
-              <circle id="ollie-pupil-l" cx="21" cy="30" r="4" fill="#08081a"/>
-              <circle id="ollie-pupil-r" cx="43" cy="30" r="4" fill="#08081a"/>
-              <circle cx="23" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
-              <circle cx="45" cy="28" r="1.5" fill="rgba(255,255,255,0.8)"/>
-              <path id="ollie-beak" d="M28 36 L32 43 L36 36Z" fill="#f5a623"/>
-              <circle id="ollie-cheek-l" cx="11" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
-              <circle id="ollie-cheek-r" cx="53" cy="36" r="5" fill="rgb(100,130,210)" opacity="0"/>
-              <ellipse id="ollie-tear" cx="21" cy="39" rx="1.5" ry="2.5" fill="rgb(100,170,255)" opacity="0"/>
-              <path d="M24 74 L20 78 M24 74 L24 78 M24 74 L28 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
-              <path d="M40 74 L36 78 M40 74 L40 78 M40 74 L44 78" stroke="#f5a623" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <!-- ─── Main app ────────────────────────────────────────────────────────── -->
+    <div id="app" class="app" hidden>
+      <!-- Header -->
+      <header class="app-header" role="banner">
+        <div class="header-brand">
+          <svg class="brand-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="#6982d8" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="3.5" fill="#6982d8"/>
+            <line x1="12" y1="3" x2="12" y2="7" stroke="#6982d8" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="12" y1="17" x2="12" y2="21" stroke="#6982d8" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="3" y1="12" x2="7" y2="12" stroke="#6982d8" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="17" y1="12" x2="21" y2="12" stroke="#6982d8" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span class="brand-name">MindPortal</span>
+        </div>
+        <div class="header-actions">
+          <div class="size-btns" role="group" aria-label="Popup size">
+            <button id="btn-size-s" class="size-btn" aria-label="Compact view">S</button>
+            <button id="btn-size-m" class="size-btn size-btn-active" aria-label="Standard view">M</button>
+            <button id="btn-size-l" class="size-btn" aria-label="Wide view">L</button>
+          </div>
+          <button id="btn-open-page" class="icon-btn" aria-label="Open in full page" title="Open in page">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
             </svg>
-          </div>
-
-          <div id="pet-info">
-            <div class="pet-greeting" id="pet-greeting">Hi there!</div>
-            <div class="pet-mood-text" id="pet-mood-text">Ollie is waiting</div>
-            <div class="pet-mood-detail mini-hide" id="pet-mood-detail"></div>
-            <div class="streak-chip">
-              <span class="streak-num" id="streak-num">0</span>
-              <span>day streak</span>
-            </div>
-          </div>
-
-          <button id="feed-btn" disabled>Feed Ollie</button>
+          </button>
         </div>
+      </header>
 
-        <!-- Score -->
-        <div id="score-card">
-          <div id="score-ring-wrap">
-            <svg viewBox="0 0 68 68" width="68" height="68" id="score-svg">
-              <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
-              <circle id="score-arc" cx="34" cy="34" r="28" fill="none"
-                stroke="rgb(100,130,210)" stroke-width="6"
-                stroke-dasharray="175.9" stroke-dashoffset="175.9"
-                stroke-linecap="round" transform="rotate(-90 34 34)"/>
-            </svg>
-            <span id="score-num">0</span>
-          </div>
-          <div class="score-meta mini-hide">
-            <div class="score-label-text">Today's score</div>
-            <div class="score-grade" id="score-grade">—</div>
-            <div class="score-sub" id="score-sub"></div>
-            <div class="score-date" id="score-date"></div>
-          </div>
-        </div>
+      <!-- Tab bar -->
+      <nav class="tab-bar" role="tablist" aria-label="Main navigation">
+        <button class="tab-btn tab-active" role="tab" aria-selected="true" data-tab="home" id="tab-btn-home">Home</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="analytics" id="tab-btn-analytics">Stats</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="sites" id="tab-btn-sites">Sites</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="goals" id="tab-btn-goals">Goals</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="notes" id="tab-btn-notes">Notes</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="language" id="tab-btn-language">Lang</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="profile" id="tab-btn-profile">Profile</button>
+      </nav>
 
-        <!-- Progress bars -->
-        <div id="progress-card" class="mini-hide">
-          <div class="prog-row">
-            <div class="prog-header">
-              <span class="prog-label">Productive</span>
-              <span class="prog-val" id="prod-val">0m / 2h</span>
+      <!-- Tab content -->
+      <main id="tab-content" role="main">
+
+        <!-- ─── HOME ───────────────────────────────────────────────────────── -->
+        <section id="panel-home" class="panel" role="tabpanel" aria-labelledby="tab-btn-home">
+
+          <!-- Today card -->
+          <div class="today-card">
+            <div class="today-left">
+              <div class="today-greeting" id="today-greeting">Good morning</div>
+              <div class="today-stats">
+                <span id="stat-focus-time" class="stat-val">0m</span><span class="stat-sep">focused</span>
+                <span class="stat-dot" aria-hidden="true">·</span>
+                <span id="stat-streak" class="stat-val">0</span><span class="stat-sep">day streak</span>
+              </div>
             </div>
-            <div class="prog-track"><div class="prog-fill accent" id="prod-bar"></div></div>
-          </div>
-          <div class="prog-row">
-            <div class="prog-header">
-              <span class="prog-label">Distractions</span>
-              <span class="prog-val" id="unprod-val">0m / 30m</span>
-            </div>
-            <div class="prog-track"><div class="prog-fill dim" id="unprod-bar"></div></div>
-          </div>
-          <div id="top-sites" class="large-only"></div>
-        </div>
-
-        <!-- Study Timer -->
-        <div id="timer-card">
-          <div id="timer-header">
-            <span class="section-eyebrow">Study Timer</span>
-            <span id="session-count"></span>
-          </div>
-          <div id="timer-display-row">
-            <span id="timer-time">--:--</span>
-            <span id="timer-mode-text" class="hidden"></span>
-          </div>
-          <div id="timer-controls">
-            <button class="btn-secondary hi" id="pom-start">Start session</button>
-            <button class="btn-secondary hidden" id="pom-pause">Pause</button>
-            <button class="btn-secondary hidden" id="pom-resume">Resume</button>
-            <button class="btn-secondary hidden" id="pom-skip">Skip</button>
-            <button class="btn-ghost hidden" id="pom-stop">Stop</button>
-          </div>
-        </div>
-
-        <!-- Focus mode -->
-        <div id="focus-row">
-          <div id="focus-idle" class="focus-info" style="flex:1">
-            <div class="focus-label">Focus Mode</div>
-            <div class="focus-sub">Hard-block all distracting sites</div>
-          </div>
-          <div id="focus-active" class="focus-info hidden" style="flex:1">
-            <div class="focus-active-label">Focus Mode · Active</div>
-            <div id="focus-remaining">--:-- remaining</div>
-          </div>
-          <div class="focus-controls">
-            <select id="focus-duration" title="Duration">
-              <option value="15">15m</option>
-              <option value="30" selected>30m</option>
-              <option value="60">1h</option>
-              <option value="90">90m</option>
-              <option value="120">2h</option>
-            </select>
-            <button class="btn-secondary hi" id="btn-focus-activate">Activate</button>
-            <button class="btn-danger hidden" id="btn-focus-cancel">Cancel</button>
-          </div>
-        </div>
-
-      </div><!-- /panel-home -->
-
-      <!-- ── Analytics panel ────────────────────────────────────────── -->
-      <div class="tab-panel" id="panel-analytics">
-
-        <div class="panel-section">
-          <div class="stat-grid">
-            <div class="stat-card">
-              <div class="stat-num" id="stat-streak">0</div>
-              <div class="stat-label">Streak</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num" id="stat-longest">0</div>
-              <div class="stat-label">Best</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num" id="stat-sessions">0</div>
-              <div class="stat-label">Sessions</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-num accent-text" id="stat-score">—</div>
-              <div class="stat-label">Score</div>
+            <div class="score-ring-wrap" aria-label="Today's focus score">
+              <svg viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
+                <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4"/>
+                <circle id="score-arc" cx="22" cy="22" r="18" fill="none" stroke="#6982d8" stroke-width="4"
+                  stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113"
+                  transform="rotate(-90 22 22)"/>
+              </svg>
+              <span id="score-label" class="score-label">0</span>
             </div>
           </div>
-        </div>
 
-        <div class="panel-section">
-          <div class="section-eyebrow" style="margin-bottom:8px">Daily Focus (min)</div>
-          <div class="chart-legend" style="margin-bottom:6px">
-            <span class="legend-dot blue"></span>Productive
-            <span class="legend-dot red"></span>Unproductive
+          <!-- Ollie section -->
+          <div class="ollie-section">
+            <div class="ollie-wrap">
+              <svg id="ollie-svg" class="ollie" viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg" aria-label="Ollie the owl, your focus companion">
+                <ellipse cx="50" cy="97" rx="18" ry="14" fill="#171740"/>
+                <ellipse cx="31" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(-12 31 93)"/>
+                <ellipse cx="69" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(12 69 93)"/>
+                <circle cx="50" cy="54" r="28" fill="#1a1a42"/>
+                <polygon points="27,37 17,8 38,28" fill="#1a1a42"/>
+                <polygon points="73,37 83,8 62,28" fill="#1a1a42"/>
+                <ellipse cx="50" cy="56" rx="20" ry="18" fill="#20205a"/>
+                <circle id="iris-l" cx="38" cy="51" r="10" fill="#fff"/>
+                <circle id="iris-r" cx="62" cy="51" r="10" fill="#fff"/>
+                <circle id="pupil-l" cx="38" cy="51" r="6" fill="#6982d8"/>
+                <circle id="pupil-r" cx="62" cy="51" r="6" fill="#6982d8"/>
+                <circle cx="38" cy="51" r="3" fill="#05050f"/>
+                <circle cx="62" cy="51" r="3" fill="#05050f"/>
+                <circle cx="40" cy="49" r="1.5" fill="#fff"/>
+                <circle cx="64" cy="49" r="1.5" fill="#fff"/>
+                <path d="M46 62 L50 69 L54 62 Q50 60 46 62 Z" fill="#f5a623"/>
+                <ellipse id="cheek-l" cx="28" cy="57" rx="6" ry="4" fill="rgba(249,115,22,0.0)"/>
+                <ellipse id="cheek-r" cx="72" cy="57" rx="6" ry="4" fill="rgba(249,115,22,0.0)"/>
+                <path id="ollie-mouth" d="M44 72 Q50 76 56 72" stroke="#6982d8" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <ellipse cx="50" cy="91" rx="12" ry="8" fill="#20205a"/>
+              </svg>
+              <button class="feed-btn" id="feed-btn" aria-label="Feed Ollie">Feed</button>
+            </div>
+            <p class="ollie-message" id="ollie-message">Ready when you are.</p>
           </div>
+
+          <!-- Contextual suggestion -->
+          <div class="suggestion-card" id="suggestion-card" hidden>
+            <span class="suggestion-icon" id="suggestion-icon" aria-hidden="true">💡</span>
+            <p class="suggestion-text" id="suggestion-text"></p>
+          </div>
+
+          <!-- Focus launcher -->
+          <div class="focus-launcher" id="focus-launcher">
+            <!-- Idle -->
+            <div id="fl-idle">
+              <div class="fl-presets" role="group" aria-label="Session duration">
+                <button class="preset-btn" data-minutes="15">15m</button>
+                <button class="preset-btn preset-default" data-minutes="25">25m</button>
+                <button class="preset-btn" data-minutes="45">45m</button>
+                <button class="preset-btn" data-minutes="90">90m</button>
+              </div>
+              <input id="fl-intention" class="fl-intention-input" type="text"
+                placeholder="What are you working on? (optional)"
+                maxlength="80" autocomplete="off" aria-label="Focus intention" />
+              <button class="btn-start-focus" id="btn-start-focus">Start Focus Session</button>
+            </div>
+
+            <!-- Countdown -->
+            <div id="fl-countdown" hidden aria-live="assertive">
+              <div class="fl-countdown-wrap">
+                <span class="fl-countdown-num" id="fl-countdown-num">3</span>
+                <p class="fl-countdown-hint">Starting in</p>
+              </div>
+            </div>
+
+            <!-- Active focus -->
+            <div id="fl-active" hidden>
+              <div class="fl-active-header">
+                <span class="focus-badge">Focus</span>
+                <span class="fl-intention-display" id="fl-active-intention"></span>
+              </div>
+              <div class="fl-timer" id="fl-timer-display" aria-live="polite" aria-label="Time remaining">00:00</div>
+              <button class="btn-end-focus" id="btn-end-focus">End session</button>
+            </div>
+          </div>
+
+          <!-- Pomodoro card (shown when pomo active and no focus session) -->
+          <div class="pomo-card" id="pomo-card" hidden>
+            <div class="pomo-top">
+              <span class="pomo-mode-label" id="pomo-label">Focus</span>
+              <span class="pomo-session-count" id="pomo-count"></span>
+            </div>
+            <div class="pomo-time" id="pomo-time" aria-live="polite">25:00</div>
+            <div class="pomo-actions">
+              <button class="pomo-btn" id="btn-pomo-pause">Pause</button>
+              <button class="pomo-btn" id="btn-pomo-skip">Skip</button>
+              <button class="pomo-btn pomo-stop" id="btn-pomo-stop">Stop</button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ─── ANALYTICS ──────────────────────────────────────────────────── -->
+        <section id="panel-analytics" class="panel" hidden role="tabpanel" aria-labelledby="tab-btn-analytics">
+          <div class="section-hd">
+            <h2 class="section-title">Your week</h2>
+            <span class="section-sub" id="analytics-date-range"></span>
+          </div>
+
+          <!-- Plain-English insight -->
+          <div class="insight-card" id="insight-card" hidden>
+            <span class="insight-icon" aria-hidden="true">💡</span>
+            <p class="insight-text" id="insight-text"></p>
+          </div>
+
           <div class="chart-wrap">
-            <canvas id="chart-daily"></canvas>
+            <canvas id="daily-chart" height="120" aria-label="Daily focus time chart"></canvas>
           </div>
-        </div>
 
-        <div class="panel-section">
-          <div class="section-eyebrow" style="margin-bottom:8px">Streak Calendar (90 days)</div>
-          <div id="streak-calendar" class="streak-calendar"></div>
-        </div>
-
-        <div class="panel-section">
-          <div class="section-eyebrow" style="margin-bottom:8px">Today's Sites</div>
-          <div id="sites-breakdown" class="sites-breakdown-list"></div>
-        </div>
-
-      </div><!-- /panel-analytics -->
-
-      <!-- ── Sites panel ─────────────────────────────────────────────── -->
-      <div class="tab-panel" id="panel-sites">
-
-        <div class="panel-section">
-          <div class="sites-type-label productive-label">✓ Productive Sites</div>
-          <p class="panel-desc">Time here counts toward your daily goal.</p>
-          <div class="tag-list" id="productive-tags"></div>
-          <div class="add-row">
-            <input type="text" id="productive-input" class="mp-input" placeholder="e.g. notion.so" />
-            <button class="btn-add" id="btn-add-productive">Add</button>
+          <div class="empty-state" id="analytics-empty" hidden>
+            <div class="empty-icon" aria-hidden="true">📈</div>
+            <p class="empty-title">No data yet</p>
+            <p class="empty-body">Start your first focus session to see stats here.</p>
           </div>
-        </div>
 
-        <div class="panel-section">
-          <div class="sites-type-label unproductive-label">✗ Unproductive Sites</div>
-          <p class="panel-desc">Visiting these triggers a warning / block.</p>
-          <div class="tag-list" id="unproductive-tags"></div>
-          <div class="add-row">
-            <input type="text" id="unproductive-input" class="mp-input" placeholder="e.g. reddit.com" />
-            <button class="btn-add" id="btn-add-unproductive">Add</button>
+          <div class="cal-section">
+            <div class="cal-hd">This month</div>
+            <div id="score-calendar" class="score-calendar" aria-label="Monthly focus score calendar"></div>
           </div>
-        </div>
 
-        <div class="panel-section save-section">
-          <button class="btn-primary" id="btn-save-sites">Save Changes</button>
-          <span class="save-status" id="save-sites-status"></span>
-        </div>
+          <div class="breakdown-section" id="breakdown-section">
+            <div class="breakdown-hd">Top sites today</div>
+            <div id="site-breakdown" class="site-breakdown"></div>
+          </div>
+        </section>
 
-      </div><!-- /panel-sites -->
+        <!-- ─── SITES ──────────────────────────────────────────────────────── -->
+        <section id="panel-sites" class="panel" hidden role="tabpanel" aria-labelledby="tab-btn-sites">
+          <div class="section-hd">
+            <h2 class="section-title">Sites</h2>
+          </div>
 
-      <!-- ── Goals panel ─────────────────────────────────────────────── -->
-      <div class="tab-panel" id="panel-goals">
-
-        <div class="panel-section">
-          <div class="section-eyebrow mb-8">Daily Goals</div>
-          <div class="field-row-2">
-            <div class="field">
-              <label class="field-label" for="g-goal">Productive goal (min/day)</label>
-              <input type="number" id="g-goal" class="mp-input num-input" min="10" max="600" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="g-cap">Distraction cap (min/day)</label>
-              <input type="number" id="g-cap" class="mp-input num-input" min="0" max="480" />
+          <!-- Current site quick action -->
+          <div class="current-site-card" id="current-site-card" hidden>
+            <span class="current-site-name" id="current-site-domain"></span>
+            <div class="current-site-btns">
+              <button class="site-tag-btn site-tag-productive" id="btn-mark-productive">Mark productive</button>
+              <button class="site-tag-btn site-tag-unproductive" id="btn-mark-distracting">Mark distracting</button>
             </div>
           </div>
-        </div>
 
-        <div class="panel-section">
-          <div class="section-eyebrow mb-8">Warning Mode</div>
-          <div class="radio-group">
-            <label class="radio-card">
-              <input type="radio" name="warning-mode" value="warn" />
-              <div class="radio-body">
-                <div class="radio-title">Warn Only</div>
-                <div class="radio-desc">Ask before entering</div>
+          <div class="sites-group">
+            <div class="sites-group-hd">
+              <span class="site-dot site-dot-green" aria-hidden="true"></span>Productive
+            </div>
+            <div id="productive-tags" class="tag-list" aria-label="Productive sites list"></div>
+            <div class="add-site-row">
+              <input id="add-productive-input" class="add-site-input" type="text" placeholder="domain.com" autocomplete="off" aria-label="Add productive site"/>
+              <button id="add-productive-btn" class="add-site-btn" aria-label="Add">Add</button>
+            </div>
+          </div>
+
+          <div class="sites-group">
+            <div class="sites-group-hd">
+              <span class="site-dot site-dot-red" aria-hidden="true"></span>Distracting
+            </div>
+            <div id="unproductive-tags" class="tag-list" aria-label="Distracting sites list"></div>
+            <div class="add-site-row">
+              <input id="add-unproductive-input" class="add-site-input" type="text" placeholder="domain.com" autocomplete="off" aria-label="Add distracting site"/>
+              <button id="add-unproductive-btn" class="add-site-btn" aria-label="Add">Add</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── GOALS ──────────────────────────────────────────────────────── -->
+        <section id="panel-goals" class="panel" hidden role="tabpanel" aria-labelledby="tab-btn-goals">
+          <div class="section-hd">
+            <h2 class="section-title">Goals</h2>
+          </div>
+
+          <div class="goal-presets" role="group" aria-label="Goal presets">
+            <button class="goal-preset" id="preset-light" data-goal="60" data-cap="60">
+              <span class="gp-name">Light</span>
+              <span class="gp-detail">1 hr focus · 1 hr distraction ok</span>
+            </button>
+            <button class="goal-preset goal-preset-active" id="preset-standard" data-goal="120" data-cap="30">
+              <span class="gp-name">Standard</span>
+              <span class="gp-detail">2 hr focus · 30 min cap</span>
+            </button>
+            <button class="goal-preset" id="preset-deep" data-goal="240" data-cap="15">
+              <span class="gp-name">Deep Work</span>
+              <span class="gp-detail">4 hr focus · 15 min cap</span>
+            </button>
+          </div>
+
+          <details class="adv-details" id="goals-advanced">
+            <summary class="adv-summary">Advanced settings</summary>
+            <div class="adv-body">
+              <label class="field-label" for="input-daily-goal">Daily focus goal (minutes)</label>
+              <input id="input-daily-goal" class="field-input" type="number" min="10" max="720" step="10" value="120"/>
+
+              <label class="field-label" for="input-distraction-cap">Distraction cap (minutes)</label>
+              <input id="input-distraction-cap" class="field-input" type="number" min="0" max="240" step="5" value="30"/>
+
+              <div class="field-label">When I open a distracting site</div>
+              <div class="radio-group" role="radiogroup" aria-label="Warning mode">
+                <label class="radio-label"><input type="radio" name="warn-mode" value="warn"/> Gentle nudge</label>
+                <label class="radio-label"><input type="radio" name="warn-mode" value="countdown" checked/> Soft pause (5s)</label>
+                <label class="radio-label"><input type="radio" name="warn-mode" value="block"/> Hard block</label>
               </div>
-            </label>
-            <label class="radio-card">
-              <input type="radio" name="warning-mode" value="countdown" />
-              <div class="radio-body">
-                <div class="radio-title">Countdown</div>
-                <div class="radio-desc">5s delay before access</div>
+
+              <label class="field-label" for="input-countdown">Countdown seconds</label>
+              <input id="input-countdown" class="field-input" type="number" min="1" max="30" value="5"/>
+
+              <div class="field-label">Pomodoro lengths</div>
+              <div class="pomo-grid">
+                <div>
+                  <label class="field-label-sm" for="input-pomo-work">Work</label>
+                  <input id="input-pomo-work" class="field-input field-sm" type="number" min="5" max="90" value="25"/>
+                </div>
+                <div>
+                  <label class="field-label-sm" for="input-pomo-short">Short break</label>
+                  <input id="input-pomo-short" class="field-input field-sm" type="number" min="1" max="30" value="5"/>
+                </div>
+                <div>
+                  <label class="field-label-sm" for="input-pomo-long">Long break</label>
+                  <input id="input-pomo-long" class="field-input field-sm" type="number" min="5" max="60" value="15"/>
+                </div>
               </div>
-            </label>
-            <label class="radio-card">
-              <input type="radio" name="warning-mode" value="block" />
-              <div class="radio-body">
-                <div class="radio-title">Hard Block</div>
-                <div class="radio-desc">Needs Focus Mode to visit</div>
-              </div>
-            </label>
-          </div>
-        </div>
 
-        <div class="panel-section">
-          <div class="section-eyebrow mb-8">Study Timer (Pomodoro)</div>
-          <div class="field-row-3">
-            <div class="field">
-              <label class="field-label" for="g-work">Work (min)</label>
-              <input type="number" id="g-work" class="mp-input num-input" min="5" max="90" />
+              <label class="check-label">
+                <input type="checkbox" id="check-grace"/>Grace period (miss one day without losing streak)
+              </label>
+              <label class="check-label">
+                <input type="checkbox" id="check-auto-focus"/>Auto focus mode with Pomodoro
+              </label>
+
+              <button class="btn-save" id="btn-save-goals">Save changes</button>
+              <div class="save-msg" id="goals-save-status" aria-live="polite"></div>
             </div>
-            <div class="field">
-              <label class="field-label" for="g-short-break">Short break</label>
-              <input type="number" id="g-short-break" class="mp-input num-input" min="1" max="30" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="g-long-break">Long break</label>
-              <input type="number" id="g-long-break" class="mp-input num-input" min="5" max="60" />
-            </div>
+          </details>
+        </section>
+
+        <!-- ─── NOTES ──────────────────────────────────────────────────────── -->
+        <section id="panel-notes" class="panel" hidden role="tabpanel" aria-labelledby="tab-btn-notes">
+          <div class="section-hd">
+            <h2 class="section-title">Notes</h2>
+            <span class="autosave-tag" id="autosave-badge" aria-live="polite">Saved</span>
           </div>
-          <label class="toggle-row">
-            <input type="checkbox" id="g-auto-focus" />
-            <span class="toggle-label">Auto-activate Focus Mode during work sessions</span>
-          </label>
-        </div>
 
-        <div class="panel-section">
-          <div class="section-eyebrow mb-8">Focus Mode</div>
-          <div class="field">
-            <label class="field-label" for="g-focus-default">Default duration (min)</label>
-            <input type="number" id="g-focus-default" class="mp-input num-input" min="5" max="480" />
+          <div class="note-templates" role="group" aria-label="Note templates">
+            <button class="tpl-btn" data-tpl="plan">Today's Plan</button>
+            <button class="tpl-btn" data-tpl="sprint">Work Sprint</button>
+            <button class="tpl-btn" data-tpl="brain">Brain Dump</button>
+            <button class="tpl-btn" data-tpl="reflect">Reflection</button>
           </div>
-          <label class="toggle-row" style="margin-top:8px">
-            <input type="checkbox" id="g-grace-period" />
-            <span class="toggle-label">Grace period — one missed day doesn't break streak</span>
-          </label>
-        </div>
 
-        <div class="panel-section save-section">
-          <button class="btn-primary" id="btn-save-goals">Save Changes</button>
-          <span class="save-status" id="save-goals-status"></span>
-        </div>
+          <textarea id="notes-textarea" class="notes-textarea"
+            placeholder="Write anything here. It saves automatically."
+            aria-label="Notes" spellcheck="true"></textarea>
 
-      </div><!-- /panel-goals -->
-
-      <!-- ── Notes panel ─────────────────────────────────────────────── -->
-      <div class="tab-panel" id="panel-notes">
-
-        <div class="panel-section">
-          <div class="section-eyebrow mb-8">Quick Notes</div>
-          <p class="panel-desc">Jot down tasks, ideas, or reminders. Saves automatically to your browser.</p>
-          <textarea id="notes-textarea" class="notes-area" placeholder="Start writing..."></textarea>
           <div class="notes-footer">
-            <span class="notes-count" id="notes-count">0 chars</span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="save-status" id="save-notes-status"></span>
-              <button class="btn-primary sm" id="btn-save-notes">Save</button>
+            <span class="char-count" id="notes-char-count">0 chars</span>
+            <button class="btn-ghost-sm" id="btn-clear-notes" aria-label="Clear notes">Clear</button>
+          </div>
+        </section>
+
+        <!-- ─── LANGUAGE ───────────────────────────────────────────────────── -->
+        <section id="panel-language" class="panel" hidden role="tabpanel" aria-labelledby="tab-btn-language">
+          <div class="section-hd">
+            <h2 class="section-title">Language Learning</h2>
+            <span class="cs-badge">Coming soon</span>
+          </div>
+
+          <div class="lang-card">
+            <p class="lang-prompt">Which language are you learning?</p>
+            <div class="lang-chips" role="group" aria-label="Select language">
+              <button class="lang-chip" data-lang="Spanish">Spanish</button>
+              <button class="lang-chip" data-lang="French">French</button>
+              <button class="lang-chip" data-lang="Japanese">Japanese</button>
+              <button class="lang-chip" data-lang="Mandarin">Mandarin</button>
+              <button class="lang-chip" data-lang="German">German</button>
+              <button class="lang-chip" data-lang="Portuguese">Portuguese</button>
+              <button class="lang-chip" data-lang="Korean">Korean</button>
+              <button class="lang-chip" data-lang="Italian">Italian</button>
+            </div>
+            <div class="lang-selected" id="lang-selected-wrap" hidden>
+              <span class="lang-selected-text">Goal: <strong id="lang-selected-value"></strong></span>
+              <button class="btn-ghost-sm" id="lang-change-btn">Change</button>
             </div>
           </div>
-        </div>
 
-      </div><!-- /panel-notes -->
-
-      <!-- ── Language panel ──────────────────────────────────────────── -->
-      <div class="tab-panel" id="panel-language">
-
-        <div class="coming-soon-wrap">
-          <div class="coming-soon-icon">🌍</div>
-          <h2 class="coming-soon-title">Language Learning</h2>
-          <p class="coming-soon-body">
-            Build vocabulary and practice languages right from your browser.
-            Daily word challenges, spaced repetition, and progress tracking — coming soon.
-          </p>
-          <div class="coming-soon-chips">
-            <span class="chip">Vocabulary builder</span>
-            <span class="chip">Spaced repetition</span>
-            <span class="chip">Daily challenges</span>
-            <span class="chip">Progress streaks</span>
-          </div>
-          <div class="coming-soon-badge">Coming Soon</div>
-        </div>
-
-      </div><!-- /panel-language -->
-
-      <!-- ── Profile panel ───────────────────────────────────────────── -->
-      <div class="tab-panel" id="panel-profile">
-
-        <div class="panel-section">
-          <div class="section-eyebrow mb-8">Your Name</div>
-          <div class="field">
-            <input type="text" id="p-name" class="mp-input" maxlength="30" placeholder="First name" />
-          </div>
-          <div class="save-section" style="margin-top:10px">
-            <button class="btn-primary sm" id="btn-save-profile">Save</button>
-            <span class="save-status" id="save-profile-status"></span>
-          </div>
-        </div>
-
-        <div class="panel-section">
-          <div class="section-eyebrow mb-8">About MindPortal</div>
-          <div class="about-card">
-            <div class="about-logo">
-              <div class="brand-dot large">M</div>
+          <div class="roadmap">
+            <div class="roadmap-hd">What's coming</div>
+            <div class="roadmap-item roadmap-next">
+              <span class="rm-dot rm-dot-next" aria-hidden="true"></span>
+              <div class="rm-content">
+                <span class="rm-name">Daily vocabulary words</span>
+                <span class="rm-eta">Next release</span>
+              </div>
             </div>
-            <div class="about-text">
-              <div class="about-name">MindPortal v1.0.0</div>
-              <div class="about-tagline">Forge your focus, one day at a time.</div>
+            <div class="roadmap-item">
+              <span class="rm-dot" aria-hidden="true"></span>
+              <div class="rm-content">
+                <span class="rm-name">Block distractions in your target language</span>
+                <span class="rm-eta">Q3 2025</span>
+              </div>
+            </div>
+            <div class="roadmap-item">
+              <span class="rm-dot" aria-hidden="true"></span>
+              <div class="rm-content">
+                <span class="rm-name">Immersion mode: live page translation</span>
+                <span class="rm-eta">Q4 2025</span>
+              </div>
+            </div>
+            <div class="roadmap-item">
+              <span class="rm-dot" aria-hidden="true"></span>
+              <div class="rm-content">
+                <span class="rm-name">Spaced repetition flashcards</span>
+                <span class="rm-eta">2026</span>
+              </div>
             </div>
           </div>
-          <p class="panel-desc" style="margin-top:10px">
-            Track productive vs. unproductive browsing, block distracting sites,
-            run Pomodoro sessions, and build daily discipline streaks.
-          </p>
-        </div>
+        </section>
 
-        <div class="panel-section danger-section">
-          <div class="section-eyebrow mb-8" style="color:rgba(255,100,100,0.6)">Danger Zone</div>
-          <p class="panel-desc">Permanently erase all data, streaks, and settings.</p>
-          <div class="save-section" style="margin-top:8px">
-            <button class="btn-danger-full" id="btn-reset-all">Reset All Data</button>
-            <button class="btn-ghost" id="btn-export">Export JSON</button>
+        <!-- ─── PROFILE ────────────────────────────────────────────────────── -->
+        <section id="panel-profile" class="panel" hidden role="tabpanel" aria-labelledby="tab-btn-profile">
+          <div class="profile-hero">
+            <svg class="profile-ollie" viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <ellipse cx="50" cy="97" rx="18" ry="14" fill="#171740"/>
+              <ellipse cx="31" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(-12 31 93)"/>
+              <ellipse cx="69" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(12 69 93)"/>
+              <circle cx="50" cy="54" r="28" fill="#1a1a42"/>
+              <polygon points="27,37 17,8 38,28" fill="#1a1a42"/>
+              <polygon points="73,37 83,8 62,28" fill="#1a1a42"/>
+              <ellipse cx="50" cy="56" rx="20" ry="18" fill="#20205a"/>
+              <circle cx="38" cy="51" r="10" fill="#fff"/>
+              <circle cx="62" cy="51" r="10" fill="#fff"/>
+              <circle cx="38" cy="51" r="6" fill="#6982d8"/>
+              <circle cx="62" cy="51" r="6" fill="#6982d8"/>
+              <circle cx="38" cy="51" r="3" fill="#05050f"/>
+              <circle cx="62" cy="51" r="3" fill="#05050f"/>
+              <circle cx="40" cy="49" r="1.5" fill="#fff"/>
+              <circle cx="64" cy="49" r="1.5" fill="#fff"/>
+              <path d="M46 62 L50 69 L54 62 Q50 60 46 62 Z" fill="#f5a623"/>
+              <path d="M44 72 Q50 76 56 72" stroke="#6982d8" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <ellipse cx="50" cy="91" rx="12" ry="8" fill="#20205a"/>
+            </svg>
+            <div class="profile-meta">
+              <div class="profile-name" id="profile-name">You</div>
+              <div class="profile-level" id="profile-level">Level 1</div>
+              <div class="xp-track" aria-label="XP progress to next level">
+                <div class="xp-fill" id="xp-bar"></div>
+              </div>
+              <div class="xp-text" id="xp-label">0 / 100 XP</div>
+            </div>
           </div>
-        </div>
 
-      </div><!-- /panel-profile -->
+          <div class="profile-stats">
+            <div class="pstat">
+              <span class="pstat-n" id="pstat-streak">0</span>
+              <span class="pstat-l">Streak</span>
+            </div>
+            <div class="pstat">
+              <span class="pstat-n" id="pstat-sessions">0</span>
+              <span class="pstat-l">Sessions</span>
+            </div>
+            <div class="pstat">
+              <span class="pstat-n" id="pstat-hours">0h</span>
+              <span class="pstat-l">Focused</span>
+            </div>
+          </div>
 
-    </div><!-- /tab-content -->
-  </div><!-- /app-shell -->
+          <div class="profile-field">
+            <label class="field-label" for="profile-name-input">Display name</label>
+            <div class="name-row">
+              <input id="profile-name-input" class="field-input" type="text" maxlength="30" placeholder="Your name" autocomplete="off"/>
+              <button class="btn-save" id="btn-save-name">Save</button>
+            </div>
+          </div>
 
-</div><!-- /app -->
-<script type="module" src="./popup.ts"></script>
-</body>
+          <details class="adv-details">
+            <summary class="adv-summary">Data controls</summary>
+            <div class="adv-body">
+              <p class="data-notice">Everything stays on your device. Nothing is sent anywhere.</p>
+              <button class="btn-danger" id="btn-reset-data">Reset all data</button>
+            </div>
+          </details>
+        </section>
+
+      </main>
+    </div>
+
+    <script type="module" src="./popup.ts"></script>
+  </body>
 </html>

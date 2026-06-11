@@ -1,8 +1,7 @@
 import { extractDomain, domainMatchesList } from "../shared/utils";
 import type { AppStorage } from "../shared/types";
 
-// Only run once per page load
-if (document.readyState !== "complete" && !document.getElementById("ff-overlay-root")) {
+if (!document.getElementById("mp-overlay-root")) {
   main();
 }
 
@@ -15,27 +14,20 @@ async function main() {
 
   const { settings, session, dismissedToday, lastDismissedDate } = storage;
 
-  // Refresh dismissed list if date changed
   const today = new Date().toISOString().slice(0, 10);
   const dismissed = lastDismissedDate === today ? dismissedToday : [];
 
-  // Check if already dismissed today
   if (dismissed.includes(domain)) return;
-
-  // Check if it's an unproductive site
   if (!domainMatchesList(domain, settings.unproductiveSites)) return;
 
-  // In focus mode → always hard block
-  const mode = session.focusModeActive ? "block" : settings.warningMode;
-
-  // During pomodoro work session with autoFocusMode → block
   const autoBlock =
     settings.pomodoroAutoFocusMode &&
     session.pomodoroActive &&
     !session.pomodoroIsBreak;
-  const effectiveMode = autoBlock ? "block" : mode;
 
-  showOverlay(domain, effectiveMode, settings.countdownSeconds, settings.userName);
+  const mode = session.focusModeActive || autoBlock ? "block" : settings.warningMode;
+
+  showOverlay(domain, mode, settings.countdownSeconds, session.intention, storage);
 }
 
 async function getStorage(): Promise<AppStorage> {
@@ -50,104 +42,163 @@ function showOverlay(
   domain: string,
   mode: "warn" | "countdown" | "block",
   countdownSeconds: number,
-  userName: string
+  intention: string,
+  storage: AppStorage,
 ) {
-  // Freeze page scroll while overlay is active
   document.documentElement.style.overflow = "hidden";
 
+  // Inject styles
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes mp-fade-in  { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes mp-slide-up { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+    @keyframes mp-pulse    { 0%,100% { opacity:1 } 50% { opacity:0.6 } }
+    @media (prefers-reduced-motion: reduce) {
+      .mp-animated { animation: none !important; transition: none !important; }
+    }
+    #mp-overlay-root * { box-sizing: border-box; margin: 0; padding: 0; }
+    #mp-overlay-root button:focus-visible { outline: 2px solid #6982d8; outline-offset: 2px; }
+  `;
+  document.head.appendChild(style);
+
   const root = document.createElement("div");
-  root.id = "ff-overlay-root";
+  root.id = "mp-overlay-root";
+  root.setAttribute("role", "dialog");
+  root.setAttribute("aria-modal", "true");
+  root.setAttribute("aria-label", "MindPortal focus reminder");
   root.setAttribute("style", `
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.88);
+    inset: 0;
+    background: rgba(5,5,15,0.9);
     z-index: 2147483647;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    animation: ff-fade-in 0.2s ease;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: mp-fade-in 0.18s ease;
   `);
 
   const card = document.createElement("div");
+  card.className = "mp-animated";
   card.setAttribute("style", `
-    background: #141414;
-    border: 1px solid #2a2a2a;
-    border-radius: 16px;
-    padding: 40px 48px;
-    max-width: 480px;
+    background: #0f0f2a;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 36px 40px;
+    max-width: 440px;
     width: 90%;
     text-align: center;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-    animation: ff-slide-up 0.25s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    animation: mp-slide-up 0.22s cubic-bezier(0.16,1,0.3,1);
   `);
 
-  const greeting = userName ? `Heads up, ${userName}` : "Heads up";
+  // Build Ollie SVG inline
+  const irisColor = mode === "block" ? "#f87171" : "#6982d8";
+  const mouthPath = mode === "block" ? "M44 74 Q50 69 56 74" : "M44 72 Q50 76 56 72";
+  const mouthColor = mode === "block" ? "#f87171" : "#6982d8";
+
+  const ollieSvg = `
+    <svg width="72" height="83" viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;filter:drop-shadow(0 4px 16px rgba(105,130,216,0.3))">
+      <ellipse cx="50" cy="97" rx="18" ry="14" fill="#171740"/>
+      <ellipse cx="31" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(-12 31 93)"/>
+      <ellipse cx="69" cy="93" rx="10" ry="15" fill="#111130" transform="rotate(12 69 93)"/>
+      <circle cx="50" cy="54" r="28" fill="#1a1a42"/>
+      <polygon points="27,37 17,8 38,28" fill="#1a1a42"/>
+      <polygon points="73,37 83,8 62,28" fill="#1a1a42"/>
+      <ellipse cx="50" cy="56" rx="20" ry="18" fill="#20205a"/>
+      <circle cx="38" cy="51" r="10" fill="#fff"/>
+      <circle cx="62" cy="51" r="10" fill="#fff"/>
+      <circle cx="38" cy="51" r="6" fill="${irisColor}"/>
+      <circle cx="62" cy="51" r="6" fill="${irisColor}"/>
+      <circle cx="38" cy="51" r="3" fill="#05050f"/>
+      <circle cx="62" cy="51" r="3" fill="#05050f"/>
+      <circle cx="40" cy="49" r="1.5" fill="#fff"/>
+      <circle cx="64" cy="49" r="1.5" fill="#fff"/>
+      <path d="M46 62 L50 69 L54 62 Q50 60 46 62 Z" fill="#f5a623"/>
+      <path d="${mouthPath}" stroke="${mouthColor}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="50" cy="91" rx="12" ry="8" fill="#20205a"/>
+    </svg>
+  `;
+
+  const name = storage.settings.userName ? storage.settings.userName : "";
 
   if (mode === "block") {
-    card.innerHTML = `
-      <div style="font-size:48px;margin-bottom:16px">🔒</div>
-      <h2 style="color:#e8e8e8;font-size:22px;font-weight:700;margin:0 0 8px">${greeting}</h2>
-      <p style="color:#888;font-size:15px;margin:0 0 16px">
-        <span style="color:#f87171;font-weight:600">${domain}</span> is blocked during Focus Mode.
-      </p>
-      <p style="color:#555;font-size:13px;margin:0">Deactivate Focus Mode from the extension to visit this site.</p>
-      <button id="ff-go-back" style="${btnStyle("#6c63ff")}">← Go Back</button>
-    `;
-  } else {
-    const countdownId = "ff-countdown-num";
-    const continueId = "ff-continue-btn";
+    const intentionNote = intention
+      ? `<p style="font-size:13px;color:rgba(105,130,216,0.8);margin-bottom:20px;line-height:1.4">
+           You set out to: <em>${intention}</em>
+         </p>`
+      : "";
 
     card.innerHTML = `
-      <div style="font-size:40px;margin-bottom:16px">⚠️</div>
-      <h2 style="color:#e8e8e8;font-size:22px;font-weight:700;margin:0 0 8px">${greeting}</h2>
-      <p style="color:#aaa;font-size:15px;margin:0 0 6px">
-        You're about to open
-        <span style="color:#fb923c;font-weight:600">${domain}</span>
+      ${ollieSvg}
+      <h2 style="color:rgba(255,255,255,0.92);font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-0.02em">
+        ${name ? `Hey ${name}, focus is on.` : "You're in focus mode."}
+      </h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:6px">
+        <strong style="color:#f87171">${domain}</strong> is blocked right now.
       </p>
-      <p style="color:#666;font-size:13px;margin:0 0 28px">This site is marked as <span style="color:#f87171">UNPRODUCTIVE</span>.</p>
-      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px">
-        <button id="ff-go-back" style="${btnStyle("#333", "#e8e8e8")}">← Go Back</button>
-        <button id="${continueId}" style="${btnStyle("#6c63ff")}" ${mode === "countdown" ? "disabled" : ""}>
-          ${mode === "countdown" ? `Continue in <span id="${countdownId}">${countdownSeconds}</span>s…` : "Continue Anyway →"}
+      ${intentionNote}
+      <p style="color:rgba(255,255,255,0.28);font-size:12px;margin-bottom:28px">
+        Deactivate focus mode from MindPortal to visit this site.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button id="mp-go-back" style="${btnPrimary}">← Go back</button>
+        <button id="mp-queue-btn" style="${btnSecondary}" title="Open this site after your focus session ends">Open after focus</button>
+      </div>
+    `;
+  } else {
+    const countdownId = "mp-countdown-num";
+    const continueId  = "mp-continue-btn";
+
+    card.innerHTML = `
+      ${ollieSvg}
+      <h2 style="color:rgba(255,255,255,0.92);font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-0.02em">
+        ${name ? `${name}, just a moment.` : "Just a moment."}
+      </h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:20px;line-height:1.45">
+        <strong style="color:#fbbf24">${domain}</strong> is on your distraction list.
+        Is this a good use of your time right now?
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:18px">
+        <button id="mp-go-back" style="${btnPrimary}">← Go back</button>
+        <button id="${continueId}" style="${btnGhost}" ${mode === "countdown" ? "disabled" : ""}>
+          ${mode === "countdown"
+            ? `Continue in <span id="${countdownId}">${countdownSeconds}</span>s`
+            : "Continue anyway"}
         </button>
       </div>
-      <label style="display:flex;align-items:center;justify-content:center;gap:8px;color:#555;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="ff-dismiss-today" style="accent-color:#6c63ff">
-        Don't warn me for ${domain} today
+      <label style="display:inline-flex;align-items:center;gap:7px;color:rgba(255,255,255,0.32);font-size:12px;cursor:pointer">
+        <input type="checkbox" id="mp-dismiss-today" style="accent-color:#6982d8"/>
+        Skip warnings for ${domain} today
       </label>
     `;
   }
 
-  // Inject keyframe CSS
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes ff-fade-in { from { opacity: 0 } to { opacity: 1 } }
-    @keyframes ff-slide-up { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-    #ff-overlay-root * { box-sizing: border-box; }
-  `;
-  document.head.appendChild(style);
   root.appendChild(card);
   document.body.appendChild(root);
 
-  // Go Back button
-  document.getElementById("ff-go-back")?.addEventListener("click", () => {
+  // Go back
+  document.getElementById("mp-go-back")?.addEventListener("click", () => {
     removeOverlay();
     history.back();
   });
 
+  // Delay queue (block mode)
+  document.getElementById("mp-queue-btn")?.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ type: "ADD_DELAY_QUEUE", domain });
+    removeOverlay();
+    history.back();
+  });
+
+  // Countdown / continue (warn / countdown modes)
   if (mode === "warn") {
-    // Instant continue
-    document.getElementById("ff-continue-btn")?.addEventListener("click", () => {
-      handleContinue(domain);
-    });
+    document.getElementById("mp-continue-btn")?.addEventListener("click", () => handleContinue());
   } else if (mode === "countdown") {
-    // Countdown timer
     let remaining = countdownSeconds;
     const countdownEl = document.getElementById(countdownId);
-    const continueBtn = document.getElementById("ff-continue-btn") as HTMLButtonElement | null;
+    const continueBtn = document.getElementById(continueId) as HTMLButtonElement | null;
 
     const interval = setInterval(() => {
       remaining--;
@@ -156,16 +207,16 @@ function showOverlay(
         clearInterval(interval);
         if (continueBtn) {
           continueBtn.disabled = false;
-          continueBtn.innerHTML = "Continue →";
-          continueBtn.addEventListener("click", () => handleContinue(domain));
+          continueBtn.textContent = "Continue anyway";
+          continueBtn.addEventListener("click", () => handleContinue());
         }
       }
     }, 1000);
   }
 
-  function handleContinue(domain: string) {
-    const dismissCheckbox = document.getElementById("ff-dismiss-today") as HTMLInputElement | null;
-    if (dismissCheckbox?.checked) {
+  function handleContinue() {
+    const cb = document.getElementById("mp-dismiss-today") as HTMLInputElement | null;
+    if (cb?.checked) {
       chrome.runtime.sendMessage({ type: "DISMISS_SITE_TODAY", domain });
     }
     removeOverlay();
@@ -178,20 +229,41 @@ function showOverlay(
   }
 }
 
-function btnStyle(bg: string, color = "#fff"): string {
-  return `
-    background: ${bg};
-    color: ${color};
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.15s;
-    outline: none;
-    font-family: inherit;
-    &:hover { opacity: 0.85 }
-    &:disabled { opacity: 0.4; cursor: not-allowed }
-  `.replace(/\s+/g, " ");
-}
+const btnPrimary = `
+  background: #6982d8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+`.replace(/\s+/g, " ");
+
+const btnSecondary = `
+  background: rgba(248,113,113,0.12);
+  color: #f87171;
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+`.replace(/\s+/g, " ");
+
+const btnGhost = `
+  background: transparent;
+  color: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+`.replace(/\s+/g, " ");
